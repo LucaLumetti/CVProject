@@ -1,0 +1,4 @@
+test_images
+__pycache__
+pip-log.txt
+*.log
