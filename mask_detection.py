@@ -1,11 +1,7 @@
 #!/usr/bin/python3
-import dlib
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import random
-from itertools import chain
 import mediapipe as mp
 
 fixed_landmarks = [234, 454, 447, 345, 346, 347, 348, 349, 277, 437, 399, 419, 197, 196, 174, 47, 120, 119, 118, 117,
@@ -13,10 +9,9 @@ fixed_landmarks = [234, 454, 447, 345, 346, 347, 348, 349, 277, 437, 399, 419, 1
 
 def get_image(pathname):
     img = cv2.imread(pathname)
-    # img = cv2.imread('../front_lateral_people/1_front2.jpg')
     img_height, img_width, img_channels = img.shape
     img_area = img_height*img_width
-    img = ResizeWithRatio(img,width=720)
+    img = ResizeWithRatio(img,height=720)
     cv2.imshow('original', img)
     cv2.waitKey(0)
     return img
@@ -37,7 +32,7 @@ def ResizeWithRatio(img, width=None, height=None, inter=cv2.INTER_AREA):
     return cv2.resize(img,dim,interpolation=inter)
 
 # keypoint detection
-def find_facial_landmarks(img,landmarks=[]):
+def find_facial_landmarks(img,landmarks=[],debug=False):
 
     with open('landmarks_list.txt', 'r') as f:
         landmarks_list = [int(i) for i in f.readline().strip().split(',')]
@@ -61,10 +56,6 @@ def find_facial_landmarks(img,landmarks=[]):
             #    x,y = int(lm.x*iw), int(lm.y*ih)
             #    print(id, x,y)
         ih,iw,ic = img.shape
-        #xc1,yc1 = int(faceLms.landmark[18].x*iw),int(faceLms.landmark[18].y*ih)
-        #xc2,yc2 = int(faceLms.landmark[135].x*iw),int(faceLms.landmark[135].y*ih)
-        #xc3, yc3 = int(faceLms.landmark[376].x * iw), int(faceLms.landmark[376].y * ih)
-        #xtl,ytl,xbr,ybr = int(faceLms.landmark[127].x*iw),int(faceLms.landmark[127].y*ih),int(faceLms.landmark[356].x*iw),int(faceLms.landmark[152].y*ih)
 
         for landmark in landmarks_list:
             xc,yc =  int(faceLms.landmark[landmark].x*iw),int(faceLms.landmark[landmark].y*ih)
@@ -72,24 +63,21 @@ def find_facial_landmarks(img,landmarks=[]):
                 yc += 40
             else:
                 yc -= 10
-            #cv2.circle(img,(xc,yc),1,(0,255,0),3)
             keypoints.append((xc,yc))
-    cv2.imshow('landmarks', img_land)
-    cv2.waitKey(0)
+    if debug:
+        cv2.imshow('landmarks', img_land)
+        cv2.waitKey(0)
     return keypoints
 
-
-#cv2.drawContours(img_land,np.array([keypoints]),0,(0,255,0),2)
-
-def color_quantification(hsv):
-    Z = hsv.reshape((-1,3))
+# color quantization on img with fixed number of bins
+def color_quantization(img,bins=2,debug=False):
+    Z = img.reshape((-1,3))
     Z = np.float32(Z)
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    K = 4
-    ret,label,center=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
+    ret,label,center=cv2.kmeans(Z,bins,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
 
     center = np.uint8(center)
-    count_color = [0 for _ in range(K)]
+    count_color = [0 for _ in range(bins)]
 
     for elem in label:
         count_color[elem[0]] += 1
@@ -97,67 +85,94 @@ def color_quantification(hsv):
     reference = center[index_list[-1]]
     if (reference == [0,0,0]).all():
        reference = center[index_list[-2]]
-    print('dominant color is: '+str(reference))
+
     res = center[label.flatten()]
     res2 = res.reshape((img.shape))
-    cv2.imshow('kmeans',res2)
-    cv2.waitKey(0)
+    if debug:
+        cv2.imshow('kmeans',res2)
+        cv2.waitKey(0)
     return res2, reference
 
+# Function that given an img return a binary mask (np.array) of the surgical mask detected in the image img.
+# If facial landmarks are not detected, return an empty np.array.
+def find_mask(img,debug=False):
+
+    # Keypoints detection
+    keypoints = find_facial_landmarks(img,debug=debug)
+    if not keypoints:
+        return np.array([])
+    # Creating mask to isolate surgical mask area
+    mask = np.zeros(img.shape[:2], np.uint8)
+    cv2.fillPoly(mask, np.array([keypoints]), (255, 255, 255))
+    out = cv2.bitwise_and(img, img, mask=mask)
+    not_black_pxl = np.any(out != [0, 0, 0], axis=-1)
+
+    # hsv
+    img = cv2.GaussianBlur(out, (5, 5), 0)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    # Apply kmeans to find dominant color
+    res, reference = color_quantization(hsv,bins=3,debug=debug)
+
+    # Thresholding
+    res = res[:,:,2]
+
+    hist = cv2.calcHist([res[not_black_pxl]], [0], None, [256], [0, 256])
+    max_value_index = np.argmax(hist)
+    if max_value_index < 128:
+        res[res == max_value_index] = 255
+        max_value_index = 255
+    offset = 5
+
+    ret, thresh = cv2.threshold(res, max_value_index - offset, 255, cv2.THRESH_BINARY)
+
+    # closing
+    kernel = np.ones((3, 3), np.uint8)
+    closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+
+    # Erosion
+    eroded = cv2.erode(closing, kernel, iterations=5)
+
+    # dilation
+    dilated = cv2.dilate(eroded, kernel, iterations=10)
+
+    if debug:
+        cv2.imshow('polygon', mask)
+        cv2.waitKey(0)
+        cv2.imshow('mask', out)
+        cv2.waitKey(0)
+        cv2.imshow('blur', img)
+        cv2.waitKey(0)
+        cv2.imshow('hsv to gray', res)
+        cv2.waitKey(0)
+        plt.subplot(221)
+        plt.plot(hist)
+        plt.show()
+        cv2.imshow('threshold', thresh)
+        cv2.waitKey(0)
+        cv2.imshow('closing', closing)
+        cv2.waitKey(0)
+        cv2.imshow('eroded', eroded)
+        cv2.waitKey(0)
+        cv2.imshow('dilated', dilated)
+        cv2.waitKey(0)
+
+    return dilated
 
 
 if __name__ == '__main__':
 
     # Read image
-    img = get_image('./masked_people/3.jpeg')
+    img = get_image('./masked_people/2.jpeg')
 
-    # Keypoints detection
-    keypoints = find_facial_landmarks(img)
+    # Find mask
+    mask = find_mask(img)
+    if mask.size == 0:
+        print('[ERROR] Unable to detect facial landmarks')
+        exit(1)
 
-    # Grayscaling
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    cv2.imshow('gray', gray)
+    cv2.imshow('Mask',mask)
     cv2.waitKey(0)
 
-    # Creating mask to isolate surgical mask area
-    mask = np.zeros(img.shape[:2], np.uint8)
-    cv2.imshow('polygon', cv2.fillPoly(mask, np.array([keypoints]), (255, 255, 255)))
-    #mask[ytl:ybr+30,xtl:xbr+30] = img[ytl:ybr+30,xtl :xbr+30]
-    out = cv2.bitwise_and(img, img, mask=mask)
-    #not_black_pxl = np.any(out != [0, 0, 0], axis=-1)
-    cv2.imshow('mask', out)
-    cv2.waitKey(0)
 
-    # hsv
-    img = cv2.GaussianBlur(out, (5, 5), 0)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    cv2.imshow('blur', img)
-    cv2.waitKey(0)
 
-    # Apply kmeans to find dominant color
-    res,reference = color_quantification(hsv)
-
-    # Thresholding
-    #reference = np.round(np.mean(np.array([hsv[yc1,xc1],hsv[yc3,xc3],hsv[yc3,xc3]]),axis=0))
-    #reference = hsv[yc1,xc1]
-    #print(reference, reference - [20, 30, 30], reference + [20, 30, 30])
-    thresh = cv2.inRange(res, reference - [20, 30, 30], reference + [20, 30, 30])
-    #ret,thresh = cv2.threshold(cv2.cvtColor(out,cv2.COLOR_BGR2GRAY),128,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    cv2.imshow('threshold', thresh)
-    cv2.waitKey(0)
-
-    kernel = np.ones((2, 2), np.uint8)
-    # Erosion
-    #eroded = cv2.erode(thresh, kernel, iterations=5)
-    #cv2.imshow('eroded', eroded)
-    #cv2.waitKey(0)
-
-    # medblur
-    medblur = cv2.medianBlur(thresh, 5)
-    cv2.imshow('medblur', medblur)
-    cv2.waitKey(0)
-
-    # dilation
-    dilated = cv2.dilate(medblur, kernel, iterations=15)
-    cv2.imshow('dilated', dilated)
-    cv2.waitKey(0)
