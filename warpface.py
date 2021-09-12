@@ -117,7 +117,7 @@ def trasformation_image(dst, cropped_img, lnd_src, lnd_dst):
 
 # would maybe be better if we take from lateral as much as we can to cover the
 # mask
-def warp_face(front, lateral, mask, debug=False):
+def warp_face(front, lateral, debug=False):
     # make the shape the same, this maybe can be removed in the future
     lateral = cv2.resize(lateral, (front.shape[1], front.shape[0]))
 
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     front = cv2.imread('test_images/1_front.jpg')
     lateral = cv2.imread('test_images/1_lat.jpg')
 
-    warped = warp_face(front, lateral, None)
+    warped = warp_face(front, lateral)
 
     cv2.imshow('warped', warped)
     cv2.waitKey(0)
