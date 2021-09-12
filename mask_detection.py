@@ -59,8 +59,8 @@ def find_facial_landmarks(img, landmarks=[], debug=False):
         ih,iw,ic = img.shape
 
         for landmark in landmarks_list:
-            xc = int(facesLms.landmark[landmark].x*iw)
-            yc = int(facesLms.landmark[landmark].y*ih)
+            xc = int(faceLms.landmark[landmark].x*iw)
+            yc = int(faceLms.landmark[landmark].y*ih)
 
             if not landmark in fixed_landmarks:
                 yc += 40
