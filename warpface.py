@@ -60,8 +60,7 @@ def crop_image(img, mask):
     mask = np.around(mask)
     mask = mask.astype(int)
 
-    # qui serve np.array?
-    hullIndex = cv2.convexHull(np.array(mask), returnPoints=False)
+    hullIndex = cv2.convexHull(mask, returnPoints=False)
 
     lnd = []
 
@@ -70,13 +69,11 @@ def crop_image(img, mask):
 
     cropped_img = np.zeros(img.shape, dtype=np.uint8)
     cv2.fillConvexPoly(cropped_img, np.int32(lnd), (1.0, 1.0, 1.0), 16, 0)
-    #return cropped_img[np.min(Y):np.max(Y), np.min(X):np.max(X)]
     return cropped_img*img
 
 def trasformation_image(dst, cropped_img, lnd_src, lnd_dst):
-    # TODO:
-    # this MUST be improved, landmarks are normalized/denormalized so many times
-    # convert landmark in coordinates
+    # TODO: this MUST be improved, landmarks are normalized/denormalized so many
+    # time, we can avoid this
     for i in range(lnd_src.shape[0]):
         # lnd_src[i][0] *= cropped_img.shape[1]
         # lnd_src[i][1] *= cropped_img.shape[0]
@@ -91,8 +88,8 @@ def trasformation_image(dst, cropped_img, lnd_src, lnd_dst):
 
     norm_lnd_dst[:,0] /= dst.shape[1]
     norm_lnd_dst[:,1] /= dst.shape[0]
+
     src_adapting = warp_image_cv(cropped_img, norm_lnd_src, norm_lnd_dst)
-    cv2.imshow('tsp', src_adapting)
     cv2.waitKey(0)
 
     lnd_dst = np.around(lnd_dst)
@@ -108,7 +105,7 @@ def trasformation_image(dst, cropped_img, lnd_src, lnd_dst):
     base = np.copy(dst).astype(np.uint8)
     cv2.fillConvexPoly(base, np.int32(lnd), (0, 0, 0), 16, 0)
 
-    output = base+src_adapting
+    # output = base+src_adapting
 
     # # Clone seamlessly.
     # mask = np.zeros(dst.shape, dtype=dst.dtype)
@@ -116,14 +113,11 @@ def trasformation_image(dst, cropped_img, lnd_src, lnd_dst):
     # r = cv2.boundingRect(np.float32([lnd]))
     # center = ((r[0] + int(r[2] / 2), r[1] + int(r[3] / 2)))
     # output = cv2.seamlessClone(np.uint8(src_adapting), base, mask, center, cv2.NORMAL_CLONE)
-    cv2.imshow('final', output)
-    cv2.waitKey(0)
-    return output
-if __name__ == "__main__":
-    # Read front image and lateral image
-    front = cv2.imread('test_images/1_front.jpg')
-    lateral = cv2.imread('test_images/1_lat.jpg')
+    return src_adapting
 
+# would maybe be better if we take from lateral as much as we can to cover the
+# mask
+def warp_face(front, lateral, mask, debug=False):
     # make the shape the same, this maybe can be removed in the future
     lateral = cv2.resize(lateral, (front.shape[1], front.shape[0]))
 
@@ -153,7 +147,7 @@ if __name__ == "__main__":
     # cv2.waitKey(0)
 
     # better structure for landmarks coords
-    # TODO: high changes this can be useless &&/|| can be improved
+    # TODO: high changes this can be useless and/or can be improved by a lot
     front_lms = np.array([
         [landmark.x, landmark.y, landmark.z]
         for landmark in front_lms.landmark
@@ -166,26 +160,33 @@ if __name__ == "__main__":
     # calculate lateral face orientation
     # TODO: a better calculation would be based on the distance between landmark
     # 0 and 132 and 361
-    orientation = 'left' if lateral_lms[0,0] < lateral_lms[132,0] else 'right'
+    nose_left_dist = np.abs(lateral_lms[132, 0] - lateral_lms[0, 0])
+    nose_right_dist = np.abs(lateral_lms[361, 0] - lateral_lms[0, 0])
+    orientation = 'left' if nose_left_dist < nose_right_dist else 'right'
 
+    # python array to np array, maybe this can be improved
     c_src = []
     c_dst = []
 
-    for i,_ in enumerate(lateral_lms):
-        # if lateral_lms[i][2] < 0 : continue
+    for i, _ in enumerate(lateral_lms):
         if i not in left_face: continue
-        print(i)
-        c_src.append([lateral_lms[i,0], lateral_lms[i,1]])
-        c_dst.append([front_lms[i,0], front_lms[i,1]])
+        c_src.append([lateral_lms[i, 0], lateral_lms[i, 1]])
+        c_dst.append([front_lms[i, 0], front_lms[i, 1]])
 
     c_src = np.array(c_src)
     c_dst = np.array(c_dst)
 
-
     cropped = crop_image(lateral, c_src)
 
-    print(orientation)
-
     warped = trasformation_image(front, cropped, c_src, c_dst)
+    return warped
+
+if __name__ == "__main__":
+    # Read front image and lateral image
+    front = cv2.imread('test_images/1_front.jpg')
+    lateral = cv2.imread('test_images/1_lat.jpg')
+
+    warped = warp_face(front, lateral, None)
+
     cv2.imshow('warped', warped)
     cv2.waitKey(0)
