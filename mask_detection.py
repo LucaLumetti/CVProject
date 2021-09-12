@@ -129,8 +129,10 @@ def find_mask(img, debug=False):
         max_value_index = 255
     offset = 5
 
-    ret, thresh = cv2.threshold(res, max_value_index - offset, 255, cv2.THRESH_BINARY)
+    ret, thresh = cv2.threshold(res, max_value_index - offset,
+            255, cv2.THRESH_BINARY)
 
+    thresh //= 255
     # closing
     kernel = np.ones((3, 3), np.uint8)
     closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)

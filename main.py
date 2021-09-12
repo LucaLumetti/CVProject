@@ -7,7 +7,7 @@ if __name__ == '__main__':
     front = cv2.imread('front_lateral_people/1_front_m.jpg')
     lateral = cv2.imread('front_lateral_people/1_lat.jpg')
 
-    mask = find_mask(front)//255
+    mask = find_mask(front)
     warped = warp_face(front, lateral)
 
     mask = mask[..., np.newaxis]
