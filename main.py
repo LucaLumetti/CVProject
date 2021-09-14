@@ -2,12 +2,14 @@ import cv2
 import numpy as np
 from mask_detection import find_mask
 from warpface import warp_face
+from mask_detection import resize_with_ratio
 
 if __name__ == '__main__':
     front = cv2.imread('front_lateral_people/1_front_m.jpg')
     lateral = cv2.imread('front_lateral_people/1_lat.jpg')
+    #front = cv2.imread('masked_people/8.jpg')
 
-    mask = find_mask(front)
+    mask = find_mask(front,True)
     warped = warp_face(front, lateral)
 
     mask = mask[..., np.newaxis]

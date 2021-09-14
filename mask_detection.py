@@ -7,6 +7,10 @@ import mediapipe as mp
 fixed_landmarks = [234, 454, 447, 345, 346, 347, 348, 349, 277, 437, 399, 419,
         197, 196, 174, 47, 120, 119, 118, 117, 116, 34, 127]
 
+chin_landmark = 152
+leftcheek_landmark = 234
+rigthcheek_landmark = 356
+
 def get_image(pathname):
     img = cv2.imread(pathname)
     img_height, img_width, img_channels = img.shape
@@ -34,11 +38,6 @@ def resize_with_ratio(img, width=None, height=None, inter=cv2.INTER_AREA):
 # keypoint detection
 def find_facial_landmarks(img, landmarks=[], debug=False):
 
-    with open('landmarks_list.txt', 'r') as f:
-        landmarks_list = [int(i) for i in f.readline().strip().split(',')]
-
-    keypoints = []
-
     mpDraw = mp.solutions.drawing_utils
     mpFaceMesh = mp.solutions.face_mesh
     faceMesh = mpFaceMesh.FaceMesh(max_num_faces=1)
@@ -58,21 +57,18 @@ def find_facial_landmarks(img, landmarks=[], debug=False):
             #    print(id, x,y)
         ih,iw,ic = img.shape
 
-        for landmark in landmarks_list:
-            xc = int(faceLms.landmark[landmark].x*iw)
-            yc = int(faceLms.landmark[landmark].y*ih)
+        xtl, ytl = int(faceLms.landmark[leftcheek_landmark].x*iw ), int(faceLms.landmark[leftcheek_landmark].y*ih)
+        xbr, ybr = int(faceLms.landmark[rigthcheek_landmark].x*iw )+30, int(faceLms.landmark[chin_landmark].y*ih )+30
 
-            if not landmark in fixed_landmarks:
-                yc += 40
-            else:
-                yc -= 10
-            keypoints.append((xc, yc))
+        coordinates = (xtl,ytl,xbr-xtl,ybr-ytl)
+
     if debug:
         cv2.imshow('landmarks', img_land)
         cv2.waitKey(0)
-    return keypoints
 
-# color quantization on img with fixed number of bins
+    return coordinates
+
+# Color quantization on img with fixed number of bins
 def color_quantization(img, bins=2, debug=False):
     Z = img.reshape((-1, 3))
     Z = np.float32(Z)
@@ -97,43 +93,49 @@ def color_quantization(img, bins=2, debug=False):
         cv2.waitKey(0)
     return res2, reference
 
-# Function that given an img return a binary mask (np.array) of the surgical
-# mask detected in the image img. If facial landmarks are not detected, return
-# an empty np.array.
+'''
+ Function that given an img return a binary mask (np.array) of the surgical
+ mask detected in the image img. If facial landmarks are not detected, return
+ an empty np.array.
+'''
 def find_mask(img, debug=False):
 
     # Keypoints detection
-    keypoints = find_facial_landmarks(img, debug=debug)
-    if not keypoints:
+    coordinates = find_facial_landmarks(img, debug=debug)
+    if not coordinates:
         return np.array([])
     # Creating mask to isolate surgical mask area
     mask = np.zeros(img.shape[:2], np.uint8)
-    cv2.fillPoly(mask, np.array([keypoints]), (255, 255, 255))
-    out = cv2.bitwise_and(img, img, mask=mask)
-    not_black_pxl = np.any(out != [0, 0, 0], axis=-1)
+
+    # Grabcut
+    fgModel = np.zeros((1,65),np.float64)
+    bgModel = np.zeros((1,65),np.float64)
+    cv2.grabCut(img,mask,coordinates,bgModel,fgModel,iterCount=1,mode=cv2.GC_INIT_WITH_RECT)
+    output_mask = np.where((mask == cv2.GC_PR_BGD) | (mask == cv2.GC_BGD),0,1).astype('uint8')
+    output_mask *= 255
+    img = img*output_mask[:,:,np.newaxis]
 
     # hsv
-    img = cv2.GaussianBlur(out, (5, 5), 0)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    out = cv2.GaussianBlur(img, (5, 5), 0)
+    hsv = cv2.cvtColor(out, cv2.COLOR_BGR2HSV)
 
     # Apply kmeans to find dominant color
     res, reference = color_quantization(hsv, bins=3, debug=debug)
 
     # Thresholding
     res = res[:, :, 2]
-
-    hist = cv2.calcHist([res[not_black_pxl]], [0], None, [256], [0, 256])
+    hist = cv2.calcHist([res], [0], output_mask, [256], [0, 256])
     max_value_index = np.argmax(hist)
     if max_value_index < 128:
         res[res == max_value_index] = 255
         max_value_index = 255
     offset = 5
-
     ret, thresh = cv2.threshold(res, max_value_index - offset,
             255, cv2.THRESH_BINARY)
 
     thresh //= 255
-    # closing
+
+    # Closing
     kernel = np.ones((3, 3), np.uint8)
     closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
@@ -146,9 +148,9 @@ def find_mask(img, debug=False):
     if debug:
         cv2.imshow('polygon', mask)
         cv2.waitKey(0)
-        cv2.imshow('mask', out)
+        cv2.imshow('mask', output_mask)
         cv2.waitKey(0)
-        cv2.imshow('blur', img)
+        cv2.imshow('blur', out)
         cv2.waitKey(0)
         cv2.imshow('hsv to gray', res)
         cv2.waitKey(0)
