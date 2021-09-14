@@ -152,16 +152,16 @@ def find_mask(img, debug=False):
         cv2.waitKey(0)
         cv2.imshow('hsv to gray', res)
         cv2.waitKey(0)
-        plt.subplot(221)
-        plt.plot(hist)
-        plt.show()
-        cv2.imshow('threshold', thresh)
+        # plt.subplot(221)
+        # plt.plot(hist)
+        # plt.show()
+        cv2.imshow('threshold', thresh*255)
         cv2.waitKey(0)
-        cv2.imshow('closing', closing)
+        cv2.imshow('closing', closing*255)
         cv2.waitKey(0)
-        cv2.imshow('eroded', eroded)
+        cv2.imshow('eroded', eroded*255)
         cv2.waitKey(0)
-        cv2.imshow('dilated', dilated)
+        cv2.imshow('dilated', dilated*255)
         cv2.waitKey(0)
 
     return dilated
@@ -173,13 +173,10 @@ if __name__ == '__main__':
     img = get_image('./masked_people/2.jpeg')
 
     # Find mask
-    mask = find_mask(img)
+    mask = find_mask(img, debug=True)
     if mask.size == 0:
         print('[ERROR] Unable to detect facial landmarks')
         exit(1)
 
-    cv2.imshow('Mask', mask)
+    cv2.imshow('Mask', mask*255)
     cv2.waitKey(0)
-
-
-
