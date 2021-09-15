@@ -77,7 +77,7 @@ def color_quantization(img, bins=2, debug=False):
             criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
 
     center = np.uint8(center)
-    count_color = [0 for _ in range(bins)]
+    count_color = np.zeros(range(bins))
 
     for elem in label:
         count_color[elem[0]] += 1
