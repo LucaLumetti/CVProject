@@ -57,7 +57,7 @@ class Generator(nn.Module):
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(64, 3, 1, 8)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(64, 3, 1, 16)),
                 #self attention
-                # TODO: implement self attention layer
+                SelfAttention(4*self.cnum, 'relu', with_attn=False),
                 #conv
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 2)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 2)),
