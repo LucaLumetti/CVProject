@@ -34,8 +34,8 @@ class Generator(nn.Module):
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(64, 3, 1, 8)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(64, 3, 1, 16)),
                 # conv
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 2)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 2)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
                 # upsample
                 GatedDeConv(2, 4*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
                 GatedConv(2*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
@@ -61,8 +61,8 @@ class Generator(nn.Module):
                 # self attention
                 SelfAttention(4*self.cnum, 'relu', with_attn=False),
                 # conv
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 2)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 2)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
                 # upsample
                 GatedDeConv(2, 4*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
                 GatedConv(2*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
@@ -75,15 +75,33 @@ class Generator(nn.Module):
     def forward(self, input_images, input_masks):
         # coarse
         masked_images = input_images*(1-input_masks)
-        x = torch.cat([masked_images, masks, torch.full_like(masks, 1.)], dim=1)
+        x = torch.cat([masked_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
         x = self.coarse_net(x)
         x = torch.clamp(x, -1., 1) # tanh??
         coarse_result = x
 
         # refine
-        masked_images = input_images*(1-input_masks) + coarse_result*input_mask
-        x = torch.cat([masked_images, masks, torch.full_like(masks, 1.)], dim=1)
+        masked_images = input_images*(1-input_masks) + coarse_result*input_masks
+        x = torch.cat([masked_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
         x = self.refine_net(x)
         x = torch.clamp(x, -1., 1.) # tanh??
 
         return coarse_result, x
+
+if __name__ == '__main__':
+    # remember samples x channels x height x width !
+    # test if the generator can accept a Nx3x256x256 tensor + Nx1x256x256 tensor
+    # and output a Nx3x256x256 tensor without any error
+    N = 4 # number of images/mask to feed in the net
+    input_images = torch.rand((N, 3, 256, 256))
+    input_masks = torch.randint(0, 2, (N, 1, 256, 256))
+
+    net = Generator()
+    coarse_out, out = net(input_images, input_masks)
+    if out.shape == input_images.shape and coarse_out.shape == out.shape:
+        print(f'Shapes after forward are ok!')
+    else:
+        print(f'Something went wrong...')
+        print(f'input_images.shape: {input_images.shape}')
+        print(f'out.shape: {out.shape}')
+        print(f'coarse_out.shape: {input_images.shape}')
