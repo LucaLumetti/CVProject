@@ -11,7 +11,7 @@ from discriminator import Discriminator
 from loss import GeneratorLoss, DiscriminatorLoss
 from dataset import FakeDataset
 
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
 # also a logger would be nice
@@ -52,7 +52,12 @@ def train(netG, netD, optimG, optimD, lossG, lossD, dataloader):
         print(f'g_loss: {loss_generator}')
 
         # these operations has been rearranged to avoid a autograd problem
-        loss_discriminator.backward(retain_graph=True) # can't understand why retain_graph is needed here
+        # not 100% sure on why retain_graph=True
+        loss_discriminator.backward(retain_graph=True)
+        # maybe i got why retain graph is needed, the backward on the discr also
+        # touch gradint that the generator has to use, then the first backward
+        # needs to retain graph, the second does not, i will leave this comment
+        # here for the future
         loss_generator.backward()
 
         optimD.step()
