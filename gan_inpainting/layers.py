@@ -15,7 +15,7 @@ class GatedConv(nn.Module):
             groups=1,
             bias=True,
             batch_norm=True,
-            activation=nn.LeakyReLU(0.2, inplace=True)):
+            activation=nn.LeakyReLU(0.2, inplace=False)):
         super(GatedConv, self).__init__()
 
         self.conv2d = nn.Conv2d(input_channels, output_channels, kernel_size, stride, padding, dilation, groups, bias)
@@ -45,7 +45,7 @@ class GatedDeConv(nn.Module):
             groups=1,
             bias=True,
             batch_norm=True,
-            activation=nn.LeakyReLU(0.2, inplace=True)):
+            activation=nn.LeakyReLU(0.2, inplace=False)):
         super(GatedDeConv, self).__init__()
         self.gatedconv = GatedConv(input_channels, output_channels, kernel_size, stride, padding, dilation, groups, bias, batch_norm, activation)
         self.scale_factor = scale_factor
@@ -79,8 +79,5 @@ class SelfAttention(nn.Module):
         out = out.view(m_batchsize, C, width, height)
 
         out = self.gamma*out + input
-        if self.with_attn:
-            return out, attention
-        else:
-            return out
+        return out
 

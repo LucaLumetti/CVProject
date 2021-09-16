@@ -23,7 +23,6 @@ class Discriminator(nn.Module):
                 GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(8, 5, 2)),
                 SelfAttention(8*self.cnum, 'relu'),
                 GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(4, 5, 2)),
-                # nn.Linear(8*self.cnum*2*2, 1)
                 )
         self.linear = nn.Linear(8*self.cnum*2*2, 1)
         self.sigmoid = nn.Sigmoid()
@@ -35,6 +34,9 @@ class Discriminator(nn.Module):
         x = x.view((x.size(0),-1))
         x = self.linear(x)
         x = self.sigmoid(x)
+        # inplace operation
+        # x[x >= 0.5] = 1
+        # x[x < 0.5] = 0
         return x
 
 if __name__ == '__main__':

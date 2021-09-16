@@ -7,7 +7,7 @@ import torch.nn as nn
 # Implementation of the GanHingeLos, divided in 2 different classes
 class GeneratorLoss(nn.Module):
     def __init__(self):
-        self.relu = nn.ReLu()
+        super(GeneratorLoss, self).__init__()
 
     def forward(self, neg):
         loss_g = -torch.mean(neg)
@@ -15,7 +15,8 @@ class GeneratorLoss(nn.Module):
 
 class DiscriminatorLoss(nn.Module):
     def __init__(self):
-        self.relu = nn.ReLu()
+        super(DiscriminatorLoss, self).__init__()
+        self.relu = nn.ReLU()
 
     def forward(self, pos, neg):
         hinge_pos = torch.mean(self.relu(1 - pos))
