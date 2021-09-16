@@ -77,14 +77,14 @@ class Generator(nn.Module):
         masked_images = input_images*(1-input_masks)
         x = torch.cat([masked_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
         x = self.coarse_net(x)
-        x = torch.clamp(x, -1., 1) # tanh??
+        x = torch.tanh(x)
         coarse_result = x
 
         # refine
         masked_images = input_images*(1-input_masks) + coarse_result*input_masks
         x = torch.cat([masked_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
         x = self.refine_net(x)
-        x = torch.clamp(x, -1., 1.) # tanh??
+        x = torch.tanh(x)
 
         return coarse_result, x
 
