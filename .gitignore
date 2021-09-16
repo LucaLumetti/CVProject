@@ -1,4 +1,6 @@
 test_images
+gan_inpainting/data
+!gan_inpainting/data/.gitkeep
 __pycache__
 pip-log.txt
 *.log
