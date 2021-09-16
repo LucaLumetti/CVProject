@@ -6,6 +6,7 @@ import torch.nn as nn
 
 from generator import Generator
 from discriminator import Discriminator
+from loss import GeneratorLoss, DiscriminatorLoss
 
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
@@ -47,7 +48,15 @@ def train(netG, netD, optimG, optimD, lossG, lossD, dataloader):
     return
 
 def main():
-    ...
+    netG = Generator()
+    netD = Discriminator()
 
+    optimG = torch.optim.Adam(netG.parameters(), lr=0.0001, betas=(0.5, 0.999))
+    optimD = torch.optim.Adam(netD.parameters(), lr=0.0001, betas=(0.5, 0.999))
+
+    lossG = GeneratorLoss()
+    lossD = DiscriminatorLoss()
+
+    train(netG, netD, optimG, optimD, lossG, lossD)
 if __name__ == '__main__':
     main()
