@@ -23,10 +23,34 @@ class Discriminator(nn.Module):
                 GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(8, 5, 2)),
                 SelfAttention(8*self.cnum, 'relu'),
                 GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(4, 5, 2)),
-                nn.Linear(8*self.cnum*2*2, 1)
+                # nn.Linear(8*self.cnum*2*2, 1)
                 )
+        self.linear = nn.Linear(8*self.cnum*2*2, 1)
+        self.sigmoid = nn.Sigmoid()
 
-    def forward(self, input):
-        x = self.discriminator_net(input)
+    def forward(self, input_images, input_masks):
+        # masked_images = input_images*(1-input_masks) # can be this usefull?
+        x = torch.cat([input_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
+        x = self.discriminator_net(x)
+        x = x.view((x.size(0),-1))
+        x = self.linear(x)
+        x = self.sigmoid(x)
         return x
+
+if __name__ == '__main__':
+    # remember samples x channels x height x width !
+    # test if the discriminator can accept a Nx3x256x256 tensor
+    # and output a 1 or 0
+    N = 4 # number of images/mask to feed in the net
+    input_images = torch.rand((N, 3, 256, 256))
+    input_masks = torch.randint(0, 2, (N, 1, 256, 256))
+
+    net = Discriminator()
+    out = net(input_images, input_masks)
+    if out.shape == (N,1):
+        print(f'Shapes after forward are ok!')
+    else:
+        print(f'Something went wrong...')
+        print(f'input_images.shape: {input_images.shape}')
+        print(f'out.shape: {out.shape}')
 
