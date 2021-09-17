@@ -8,14 +8,14 @@ import torch.nn as nn
 
 from generator import Generator
 from discriminator import Discriminator
-from loss import GeneratorLoss, DiscriminatorLoss
+from loss import GeneratorLoss, DiscriminatorLoss, L1ReconLoss
 from dataset import FakeDataset
 
 # torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
 # also a logger would be nice
-def train(netG, netD, optimG, optimD, lossG, lossD, dataloader):
+def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
     netG.train()
     netD.train()
 
@@ -49,6 +49,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, dataloader):
 
         # loss + backward G
         loss_generator = lossG(pred_neg_imgs)
+        loss_generator += lossRecon(imgs, coarse_out, refined_out, masks)
         print(f'g_loss: {loss_generator}')
 
         # these operations has been rearranged to avoid a autograd problem
@@ -76,9 +77,10 @@ if __name__ == '__main__':
     optimD = torch.optim.Adam(netD.parameters(), lr=0.0001, betas=(0.5, 0.999))
 
     lossG = GeneratorLoss()
+    lossRecon = L1ReconLoss() # in the original paper, all alphas == 1
     lossD = DiscriminatorLoss()
 
-    train(netG, netD, optimG, optimD, lossG, lossD, dataloader)
+    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader)
 
     torch.save(netG.state_dict(), 'models/generator.pt')
     torch.save(netD.state_dict(), 'models/discriminator.pt')

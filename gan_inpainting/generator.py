@@ -16,74 +16,78 @@ def get_pad(in_,  ksize, stride, atrous=1):
 # The img size dependency can be removed easy by setting a variable and *2 or /2
 # each time we down/upsample
 class Generator(nn.Module):
-    def __init__(self, input_channels=5, cnum=32):
+    def __init__(self, input_channels=5, input_size=256, cnum=32):
         super(Generator, self).__init__()
+        if input_size%4 != 0:
+            raise 'input_size% != 0'
+
         self.cnum = cnum
+        self.size = input_size # check it to be a power of 2
         self.coarse_net = nn.Sequential(
-                GatedConv(input_channels, self.cnum, 5, 1, padding=get_pad(256, 5, 1)),
+                GatedConv(input_channels, self.cnum, 5, 1, padding=get_pad(self.size, 5, 1)),
                 # downsampling
-                GatedConv(self.cnum, 2*self.cnum, 4, 2, padding=get_pad(256, 4, 2)),
-                GatedConv(2*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
+                GatedConv(self.cnum, 2*self.cnum, 4, 2, padding=get_pad(self.size, 4, 2)),
+                GatedConv(2*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(self.size//2, 3, 1)),
                 # downsampling
-                GatedConv(2*self.cnum, 4*self.cnum, 4, 2, padding=get_pad(128, 4, 2)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1)),
+                GatedConv(2*self.cnum, 4*self.cnum, 4, 2, padding=get_pad(self.size//2, 4, 2)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 # atrous
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(64, 3, 1, 2)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(64, 3, 1, 4)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(64, 3, 1, 8)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(64, 3, 1, 16)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(self.size//4, 3, 1, 2)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(self.size//4, 3, 1, 4)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(self.size//4, 3, 1, 8)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(self.size//4, 3, 1, 16)),
                 # conv
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
                 # upsample
-                GatedDeConv(2, 4*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
-                GatedConv(2*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
+                GatedDeConv(2, 4*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(self.size//2, 3, 1)),
+                GatedConv(2*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(self.size//2, 3, 1)),
                 # upsample
-                GatedDeConv(2, 2*self.cnum, self.cnum, 3, 1, padding=get_pad(256, 3, 1)),
-                GatedConv(self.cnum, self.cnum//2, 3, 1, padding=get_pad(128, 3, 1)),
-                GatedConv(self.cnum//2, 3, 3, 1, padding=get_pad(128, 3, 1), activation=None),
+                GatedDeConv(2, 2*self.cnum, self.cnum, 3, 1, padding=get_pad(self.size, 3, 1)),
+                GatedConv(self.cnum, self.cnum//2, 3, 1, padding=get_pad(self.size//2, 3, 1)),
+                GatedConv(self.cnum//2, 3, 3, 1, padding=get_pad(self.size//2, 3, 1), activation=None),
                 )
         self.refine_conv_net = nn.Sequential(
-                GatedConv(input_channels, self.cnum, 5, 1, padding=get_pad(256, 5, 1)),
+                GatedConv(input_channels, self.cnum, 5, 1, padding=get_pad(self.size, 5, 1)),
                 # downsampling
-                GatedConv(self.cnum, self.cnum, 4, 2, padding=get_pad(256, 4, 2)),
-                GatedConv(self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
+                GatedConv(self.cnum, self.cnum, 4, 2, padding=get_pad(self.size, 4, 2)),
+                GatedConv(self.cnum, 2*self.cnum, 3, 1, padding=get_pad(self.size//2, 3, 1)),
                 # downsampling
-                GatedConv(2*self.cnum, 2*self.cnum, 4, 2, padding=get_pad(128, 4, 2)),
-                GatedConv(2*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1)),
+                GatedConv(2*self.cnum, 2*self.cnum, 4, 2, padding=get_pad(self.size//2, 4, 2)),
+                GatedConv(2*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 # atrous
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(64, 3, 1, 2)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(64, 3, 1, 4)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(64, 3, 1, 8)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(64, 3, 1, 16)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(self.size//4, 3, 1, 2)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(self.size//4, 3, 1, 4)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(self.size//4, 3, 1, 8)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(self.size//4, 3, 1, 16)),
                 )
         self.refine_att_net = nn.Sequential(
-                GatedConv(input_channels, self.cnum, 5, 1, padding=get_pad(256, 5, 1)),
+                GatedConv(input_channels, self.cnum, 5, 1, padding=get_pad(self.size, 5, 1)),
                 # downsampling
-                GatedConv(self.cnum, self.cnum, 4, 2, padding=get_pad(256, 4, 2)),
-                GatedConv(self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
+                GatedConv(self.cnum, self.cnum, 4, 2, padding=get_pad(self.size, 4, 2)),
+                GatedConv(self.cnum, 2*self.cnum, 3, 1, padding=get_pad(self.size//2, 3, 1)),
                 # downsampling
-                GatedConv(2*self.cnum, 2*self.cnum, 4, 2, padding=get_pad(128, 4, 2)),
-                GatedConv(2*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1), activation=nn.ReLU()),
+                GatedConv(2*self.cnum, 2*self.cnum, 4, 2, padding=get_pad(self.size//2, 4, 2)),
+                GatedConv(2*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1), activation=nn.ReLU()),
                 # self attention
                 SelfAttention(4*self.cnum, 'relu', with_attn=False),
                 # conv
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
                 )
         self.refine_all_net = nn.Sequential(
-                GatedConv(2*4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
+                GatedConv(2*4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
                 # upsample
-                GatedDeConv(2, 4*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
-                GatedConv(2*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
+                GatedDeConv(2, 4*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(self.size//2, 3, 1)),
+                GatedConv(2*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(self.size//2, 3, 1)),
                 # upsample
-                GatedDeConv(2, 2*self.cnum, self.cnum, 3, 1, padding=get_pad(256, 3, 1)),
-                GatedConv(self.cnum, self.cnum//2, 3, 1, padding=get_pad(128, 3, 1)),
-                GatedConv(self.cnum//2, 3, 3, 1, padding=get_pad(128, 3, 1), activation=None),
+                GatedDeConv(2, 2*self.cnum, self.cnum, 3, 1, padding=get_pad(self.size, 3, 1)),
+                GatedConv(self.cnum, self.cnum//2, 3, 1, padding=get_pad(self.size//2, 3, 1)),
+                GatedConv(self.cnum//2, 3, 3, 1, padding=get_pad(self.size//2, 3, 1), activation=None),
                 )
 
     def forward(self, input_images, input_masks):
@@ -114,12 +118,13 @@ class Generator(nn.Module):
 if __name__ == '__main__':
     # remember samples x channels x height x width !
     # test if the generator can accept a Nx3x256x256 tensor + Nx1x256x256 tensor
-    # and output a Nx3x256x256 tensor without any error
-    N = 4 # number of images/mask to feed in the net
-    input_images = torch.rand((N, 3, 256, 256))
-    input_masks = torch.randint(0, 2, (N, 1, 256, 256))
+    # and output a Nx3xSIZExSIZE tensor without any error
+    N = 2 # number of images/mask to feed in the net
+    SIZE = 1024
+    input_images = torch.rand((N, 3, SIZE, SIZE))
+    input_masks = torch.randint(0, 2, (N, 1, SIZE, SIZE))
 
-    net = Generator()
+    net = Generator(input_size=N)
     coarse_out, out = net(input_images, input_masks)
     if out.shape == input_images.shape and coarse_out.shape == out.shape:
         print(f'Shapes after forward are ok!')
