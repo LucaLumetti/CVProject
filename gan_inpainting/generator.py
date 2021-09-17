@@ -44,7 +44,7 @@ class Generator(nn.Module):
                 GatedConv(self.cnum, self.cnum//2, 3, 1, padding=get_pad(128, 3, 1)),
                 GatedConv(self.cnum//2, 3, 3, 1, padding=get_pad(128, 3, 1), activation=None),
                 )
-        self.refine_net = nn.Sequential(
+        self.refine_conv_net = nn.Sequential(
                 GatedConv(input_channels, self.cnum, 5, 1, padding=get_pad(256, 5, 1)),
                 # downsampling
                 GatedConv(self.cnum, self.cnum, 4, 2, padding=get_pad(256, 4, 2)),
@@ -58,10 +58,24 @@ class Generator(nn.Module):
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(64, 3, 1, 4)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(64, 3, 1, 8)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(64, 3, 1, 16)),
+                )
+        self.refine_att_net = nn.Sequential(
+                GatedConv(input_channels, self.cnum, 5, 1, padding=get_pad(256, 5, 1)),
+                # downsampling
+                GatedConv(self.cnum, self.cnum, 4, 2, padding=get_pad(256, 4, 2)),
+                GatedConv(self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
+                # downsampling
+                GatedConv(2*self.cnum, 2*self.cnum, 4, 2, padding=get_pad(128, 4, 2)),
+                GatedConv(2*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1), activation=nn.ReLU()),
                 # self attention
                 SelfAttention(4*self.cnum, 'relu', with_attn=False),
                 # conv
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
+                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
+                )
+        self.refine_all_net = nn.Sequential(
+                GatedConv(2*4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(64, 3, 1, 1)),
                 # upsample
                 GatedDeConv(2, 4*self.cnum, 2*self.cnum, 3, 1, padding=get_pad(128, 3, 1)),
@@ -83,10 +97,20 @@ class Generator(nn.Module):
         # refine
         masked_images = input_images*(1-input_masks) + coarse_result*input_masks
         x = torch.cat([masked_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
-        x = self.refine_net(x)
+        xnow = x
+
+        conv_out = self.refine_conv_net(x)
+        att_out = self.refine_att_net(x)
+
+        x = torch.cat([conv_out, att_out], dim=1)
+        print(f'x: {x.shape}')
+
+        x = self.refine_all_net(x)
         x = torch.tanh(x)
 
-        return coarse_result, x
+        refine_result = x
+
+        return coarse_result, refine_result
 
 if __name__ == '__main__':
     # remember samples x channels x height x width !
