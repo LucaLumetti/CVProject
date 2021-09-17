@@ -1,8 +1,8 @@
 ## People
 The people involved in the project are:
 - Luca Lumetti (244577@studenti.unimore.it)
-- Matteo Di Bartolomeo (xxxxxx@studenti.unimore.it)
-- Federico Silvestri (xxxxxx@studenti.unimore.it)
+- Matteo Di Bartolomeo (241469@studenti.unimore.it)
+- Federico Silvestri (243938@studenti.unimore.it)
 
 ## Overview
 
