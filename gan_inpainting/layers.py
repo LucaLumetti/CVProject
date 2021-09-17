@@ -20,13 +20,16 @@ class GatedConv(nn.Module):
 
         self.conv2d = nn.Conv2d(input_channels, output_channels, kernel_size, stride, padding, dilation, groups, bias)
         self.gate = nn.Sequential(
-                nn.Conv2d(input_channels, output_channels, kernel_size, stride, padding, dilation, groups, bias),
+                self.conv2d,
                 nn.Sigmoid()
                 )
         self.activation = activation if activation is not None else lambda x: x
         self.batch_norm = nn.BatchNorm2d(output_channels) if batch_norm else lambda x: x
 
     def forward(self, input):
+        # the same conv layer is applied to x and mask, in the reference code x
+        # and mask are joined togheter then split to apply sigmoid to mask only
+        # peraphs this latter approach is better
         x = self.conv2d(input)
         mask = self.gate(input)
         x = self.activation(x) * mask
@@ -80,4 +83,26 @@ class SelfAttention(nn.Module):
 
         out = self.gamma*out + input
         return out
+
+class SpectralNormConv(nn.Module):
+    def __init__(self,
+            input_channels,
+            output_channels,
+            kernel_size,
+            stride=1,
+            padding=0,
+            dilation=1,
+            groups=1,
+            bias=True,
+            activation=nn.LeakyReLU(0.2, inplace=False)):
+        super(SpectralNormConv, self).__init__()
+
+        self.conv2d = nn.Conv2d(input_channels, output_channels, kernel_size, stride, padding, dilation, groups, bias)
+        self.conv2d = nn.utils.spectral_norm(self.conv2d)
+        self.activation = activation if activation is not None else lambda x: x
+
+    def forward(self, input):
+        x = self.conv2d(input)
+        x = self.activation(x)
+        return x
 

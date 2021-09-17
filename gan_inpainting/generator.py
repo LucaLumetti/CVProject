@@ -103,7 +103,6 @@ class Generator(nn.Module):
         att_out = self.refine_att_net(x)
 
         x = torch.cat([conv_out, att_out], dim=1)
-        print(f'x: {x.shape}')
 
         x = self.refine_all_net(x)
         x = torch.tanh(x)
@@ -127,5 +126,5 @@ if __name__ == '__main__':
     else:
         print(f'Something went wrong...')
         print(f'input_images.shape: {input_images.shape}')
-        print(f'out.shape: {out.shape}')
-        print(f'coarse_out.shape: {input_images.shape}')
+    print(f'out.shape: {out.shape}')
+    print(f'coarse_out.shape: {input_images.shape}')

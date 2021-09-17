@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from layers import GatedConv, GatedDeConv, SelfAttention
+from layers import GatedConv, GatedDeConv, SelfAttention, SpectralNormConv
 
 def get_pad(in_,  ksize, stride, atrous=1):
     out_ = np.ceil(float(in_)/stride)
@@ -15,14 +15,15 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.cnum = cnum
         self.discriminator_net = nn.Sequential(
-                GatedConv(input_channels, 2*self.cnum, 4, 2, padding=get_pad(256, 5, 2)),
-                GatedConv(2*self.cnum, 4*self.cnum, 4, 2, padding=get_pad(128, 5, 2)),
-                GatedConv(4*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(64, 5, 2)),
-                GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(32, 5, 2)),
-                GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(16, 5, 2)),
-                GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(8, 5, 2)),
-                SelfAttention(8*self.cnum, 'relu'),
-                GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(4, 5, 2)),
+                SpectralNormConv(input_channels, 2*self.cnum, 4, 2, padding=get_pad(256, 5, 2)),
+                SpectralNormConv(2*self.cnum, 4*self.cnum, 4, 2, padding=get_pad(128, 4, 2)),
+                SpectralNormConv(4*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(64, 4, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(32, 4, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(16, 4, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(8, 4, 2)),
+                # not clear if usefull
+                # SelfAttention(8*self.cnum, 'relu'),
+                # GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(4, 5, 2)),
                 )
         self.linear = nn.Linear(8*self.cnum*2*2, 1)
         self.sigmoid = nn.Sigmoid()
@@ -32,11 +33,9 @@ class Discriminator(nn.Module):
         x = torch.cat([input_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
         x = self.discriminator_net(x)
         x = x.view((x.size(0),-1))
-        x = self.linear(x)
-        x = self.sigmoid(x)
-        # inplace operation
-        # x[x >= 0.5] = 1
-        # x[x < 0.5] = 0
+        # x = torch.mean(x, dim=1) # maybe this is wrong bc already done in the loss
+        # x = self.linear(x)
+        # x = self.sigmoid(x)
         return x
 
 if __name__ == '__main__':
@@ -49,10 +48,10 @@ if __name__ == '__main__':
 
     net = Discriminator()
     out = net(input_images, input_masks)
-    if out.shape == (N,1):
+    if out.shape == torch.Size([N]):
         print(f'Shapes after forward are ok!')
     else:
         print(f'Something went wrong...')
-        print(f'input_images.shape: {input_images.shape}')
-        print(f'out.shape: {out.shape}')
+    print(f'input_images.shape: {input_images.shape}')
+    print(f'out.shape: {out.shape}')
 
