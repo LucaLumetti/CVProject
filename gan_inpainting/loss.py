@@ -13,6 +13,29 @@ class GeneratorLoss(nn.Module):
         loss_g = -torch.mean(neg)
         return loss_g
 
+# code taken from https://github.com/avalonstrel/GatedConvolution_pytorch/blob/0a49013a70e77cc484ab45a5da535c2ac003b252/models/loss.py#L155
+# the code as been rearranged for better readability bc the original really suck
+class L1ReconLoss(nn.Module):
+    def __init__(self, chole_alpha=1, cunhole_alpha=1, rhole_alpha=1, runhole_alpha=1):
+        super(L1ReconLoss, self).__init__()
+        self.chole_alpha = chole_alpha
+        self.cunhole_alpha = cunhole_alpha
+        self.rhole_alpha = rhole_alpha
+        self.runhole_alpha = runhole_alpha
+
+    def forward(self, imgs, coarse_imgs, recon_imgs, masks):
+        masks_viewed = masks.view(masks.size(0), -1).mean(1).view(-1,1,1,1)
+        norm_mask = masks / masks_viewed
+        neg_norm_mask = (1 - masks) / (1. - masks_viewed)
+
+        imgs_recon_l1 = torch.abs(imgs - recon_imgs)
+        imgs_coarse_l1 = torch.abs(imgs - coarse_imgs)
+
+        return self.rhole_alpha*torch.mean(imgs_recon_l1*norm_mask) + \
+               self.runhole_alpha*torch.mean(imgs_recon_l1*neg_norm_mask) + \
+               self.chole_alpha*torch.mean(imgs_coarse_l1*norm_mask) + \
+               self.cunhole_alpha*torch.mean(imgs_coarse_l1*neg_norm_mask)
+
 class DiscriminatorLoss(nn.Module):
     def __init__(self):
         super(DiscriminatorLoss, self).__init__()
