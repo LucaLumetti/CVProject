@@ -6,5 +6,4 @@ gan_inpainting/models
 __pycache__
 pip-log.txt
 *.log
-
 .idea
