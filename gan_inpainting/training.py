@@ -64,8 +64,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, dataloader):
         optimG.step()
     return
 
-def main():
-    # using a fake dataset just to test the net until our dataset will be ready
+if __name__ == '__main__':
+    # using a fake dataset just to test the net until our dataset is not ready
     dataset = FakeDataset(None)
     dataloader = dataset.loader()
 
@@ -79,5 +79,6 @@ def main():
     lossD = DiscriminatorLoss()
 
     train(netG, netD, optimG, optimD, lossG, lossD, dataloader)
-if __name__ == '__main__':
-    main()
+
+    torch.save(netG.state_dict(), 'models/generator.pt')
+    torch.save(netD.state_dict(), 'models/discriminator.pt')
