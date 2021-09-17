@@ -11,16 +11,17 @@ def get_pad(in_,  ksize, stride, atrous=1):
     return int(((out_ - 1) * stride + atrous*(ksize-1) + 1 - in_)/2)
 
 class Discriminator(nn.Module):
-    def __init__(self, input_channels=5, cnum=32):
+    def __init__(self, input_channels=5, input_size=1024, cnum=32):
         super(Discriminator, self).__init__()
         self.cnum = cnum
+        self.size = input_size
         self.discriminator_net = nn.Sequential(
-                SpectralNormConv(input_channels, 2*self.cnum, 4, 2, padding=get_pad(256, 5, 2)),
-                SpectralNormConv(2*self.cnum, 4*self.cnum, 4, 2, padding=get_pad(128, 4, 2)),
-                SpectralNormConv(4*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(64, 4, 2)),
-                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(32, 4, 2)),
-                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(16, 4, 2)),
-                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(8, 4, 2)),
+                SpectralNormConv(input_channels, 2*self.cnum, 4, 2, padding=get_pad(self.size, 5, 2)),
+                SpectralNormConv(2*self.cnum, 4*self.cnum, 4, 2, padding=get_pad(self.size//2, 4, 2)),
+                SpectralNormConv(4*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(self.size//4, 4, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(self.size//8, 4, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(self.size//16, 4, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(self.size//32, 4, 2)),
                 # not clear if usefull
                 # SelfAttention(8*self.cnum, 'relu'),
                 # GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(4, 5, 2)),
@@ -43,8 +44,9 @@ if __name__ == '__main__':
     # test if the discriminator can accept a Nx3x256x256 tensor
     # and output a 1 or 0
     N = 4 # number of images/mask to feed in the net
-    input_images = torch.rand((N, 3, 256, 256))
-    input_masks = torch.randint(0, 2, (N, 1, 256, 256))
+    SIZE = 1024
+    input_images = torch.rand((N, 3, SIZE, SIZE))
+    input_masks = torch.randint(0, 2, (N, 1, SIZE, SIZE))
 
     net = Discriminator()
     out = net(input_images, input_masks)
