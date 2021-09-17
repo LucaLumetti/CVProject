@@ -8,3 +8,5 @@ gan_inpainting/plots
 __pycache__
 pip-log.txt
 *.log
+
+.idea
