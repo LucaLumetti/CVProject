@@ -87,7 +87,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             axs[1].set_ylabel('loss')
             axs[1].set_ylim(0,1)
             fig.tight_layout()
-            fig.savefig('loss.png', dpi=fig.dpi)
+            fig.savefig('plots/loss.png', dpi=fig.dpi)
 
     return
 

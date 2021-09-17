@@ -3,6 +3,8 @@ gan_inpainting/data
 !gan_inpainting/data/.gitkeep
 gan_inpainting/models
 !gan_inpainting/models/.gitkeep
+gan_inpainting/plots
+!gan_inpainting/plots/.gitkeep
 __pycache__
 pip-log.txt
 *.log
