@@ -14,6 +14,8 @@ from loss import GeneratorLoss, DiscriminatorLoss, L1ReconLoss
 from dataset import FakeDataset
 from config import Config
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 # torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
@@ -99,8 +101,8 @@ if __name__ == '__main__':
     dataset = FakeDataset(None)
     dataloader = dataset.loader(batch_size=config.batch_size)
 
-    netG = Generator()
-    netD = Discriminator()
+    netG = Generator().to(device)
+    netD = Discriminator().to(device)
 
     optimG = torch.optim.Adam(
             netG.parameters(),
