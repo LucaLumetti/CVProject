@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from generator import Generator
 from discriminator import Discriminator
 from loss import GeneratorLoss, DiscriminatorLoss, L1ReconLoss
-from dataset import FaceMaskDataset
+from dataset import FakeDataset, FaceMaskDataset
 from config import Config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     config = Config('config.json')
     print(config)
     # using a fake dataset just to test the net until our dataset is not ready
-    dataset = FakeDataset(None)
+    dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
 
     netG = Generator().to(device)
