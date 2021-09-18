@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from generator import Generator
 from discriminator import Discriminator
 from loss import GeneratorLoss, DiscriminatorLoss, L1ReconLoss
-from dataset import FakeDataset
+from dataset import FaceMaskDataset
 from config import Config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
