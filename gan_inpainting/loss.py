@@ -24,6 +24,7 @@ class L1ReconLoss(nn.Module):
         self.runhole_alpha = runhole_alpha
 
     def forward(self, imgs, coarse_imgs, recon_imgs, masks):
+        masks, _ = torch.chunk(masks, 2, dim=0)
         masks_viewed = masks.view(masks.size(0), -1).mean(1).view(-1,1,1,1)
         norm_mask = masks / masks_viewed
         neg_norm_mask = (1 - masks) / (1. - masks_viewed)

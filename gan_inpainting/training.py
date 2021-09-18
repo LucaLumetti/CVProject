@@ -12,6 +12,7 @@ from generator import Generator
 from discriminator import Discriminator
 from loss import GeneratorLoss, DiscriminatorLoss, L1ReconLoss
 from dataset import FakeDataset
+from config import Config
 
 # torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
@@ -92,15 +93,25 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
     return
 
 if __name__ == '__main__':
+    config = Config('config.json')
+    print(config)
     # using a fake dataset just to test the net until our dataset is not ready
     dataset = FakeDataset(None)
-    dataloader = dataset.loader()
+    dataloader = dataset.loader(batch_size=config.batch_size)
 
     netG = Generator()
     netD = Discriminator()
 
-    optimG = torch.optim.Adam(netG.parameters(), lr=0.0001, betas=(0.5, 0.999))
-    optimD = torch.optim.Adam(netD.parameters(), lr=0.0001, betas=(0.5, 0.999))
+    optimG = torch.optim.Adam(
+            netG.parameters(),
+            lr=config.learning_rate,
+            betas=(0.5, 0.999)
+            )
+    optimD = torch.optim.Adam(
+            netD.parameters(),
+            lr=config.learning_rate,
+            betas=(0.5, 0.999)
+            )
 
     lossG = GeneratorLoss()
     lossRecon = L1ReconLoss() # in the original paper, all alphas == 1
