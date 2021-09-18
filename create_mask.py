@@ -8,7 +8,9 @@ from skimage import draw
 from os import listdir
 from os.path import isfile, join
 
-mypath = "./photos/"
+from mask_detection import find_mask
+
+mypath = "./dataset/"
 
 bottom_face_landmarks = [0, 1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 16, 17, 18, 19,
         20, 32, 36, 37, 38, 39, 40, 41, 42, 43, 44, 47, 48, 49, 50, 51, 57, 58,
@@ -29,47 +31,15 @@ bottom_face_landmarks = [0, 1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 16, 17, 18, 19,
         423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436,
         437, 438, 439, 440, 455, 456, 457, 458, 459, 460, 462]
 
-# Return image with the same size of the original image but with 0 out
-# of the mask
-def get_mask(img, mask):
-    for i in range(mask.shape[0]):
-        mask[i][0] *= img.shape[1]
-        mask[i][1] *= img.shape[0]
-
-    mask = np.around(mask)
-    mask = mask.astype(int)
-
-    hullIndex = cv2.convexHull(mask, returnPoints=False)
-
-    lnd = []
-
-    for c in range(0, len(hullIndex)):
-        lnd.append(mask[int(hullIndex[c])])
-
-    cropped_img = np.zeros(img.shape, dtype=np.uint8)
-    cv2.fillConvexPoly(cropped_img, np.int32(lnd), (1.0, 1.0, 1.0), 16, 0)
-    return cropped_img*img
-
 if __name__ == "__main__":
     photos = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 
     for photo in photos:
         img = cv2.imread(photo)
 
-        # init mediapipe net for facemesh
-        mpDraw = mp.solutions.drawing_utils
-        mpFaceMesh = mp.solutions.face_mesh
-        faceMesh = mpFaceMesh.FaceMesh(max_num_faces=1)
-        drawSpec = mpDraw.DrawingSpec(thickness=1, circle_radius=1)
+        img_mask = find_mask(img)
 
-        key_point = faceMesh.process(img)
-        landmarks = key_point.multi_face_landmarks[0]
-
-        landmarks = np.array([
-            [landmark.x, landmark.y]
-            for landmark in landmarks.landmark
-        ])
-
-        landmarks = landmarks[bottom_face_landmarks]
-
-        img_mask = get_mask(img, landmarks)
+        mask_name = photo.split(".", 1)
+        mask_name = mask_name[0] + "_mask"+mask[1]
+        cv2.imshow("mask", img_mask)
+        cv2.imwrite(mask_name, img_mask)
