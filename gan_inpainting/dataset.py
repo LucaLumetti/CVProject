@@ -14,7 +14,7 @@ class FakeDataset(Dataset):
         return
 
     def __len__(self):
-        return 10
+        return 50
 
     def __getitem__(self, index):
         return torch.rand((3, 256, 256)), torch.randint(0, 2, (1, 256, 256))
