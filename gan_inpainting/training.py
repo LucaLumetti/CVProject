@@ -92,16 +92,22 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
                 f"loss_d: {losses['d'][-1]}, " + \
                 f"loss_r: {losses['r'][-1]}, " + \
                 f"accuracy_d: {accuracies['d'][-1]}")
-        if i%5 == 0:
-            fig, axs = plt.subplots(2, 1)
+        if i%1 == 0:
+            fig, axs = plt.subplots(3, 1)
             x_axis = range(len(losses['g']))
+            # loss g
             axs[0].plot(x_axis, losses['g'], x_axis, losses['r'])
-            axs[0].set_xlabel('it')
+            axs[0].set_xlabel('iterations')
             axs[0].set_ylabel('loss')
+            # loss d
             axs[1].plot(x_axis, losses['d'])
-            axs[1].set_xlabel('it')
+            axs[1].set_xlabel('iterations')
             axs[1].set_ylabel('loss')
-            axs[1].set_ylim(0,1)
+            # acc d
+            axs[2].plot(x_axis, accuracies['d'])
+            axs[2].set_xlabel('iterations')
+            axs[2].set_ylabel('accuracy')
+            axs[2].set_ylim(0,1)
             fig.tight_layout()
             fig.savefig('plots/loss.png', dpi=fig.dpi)
 
