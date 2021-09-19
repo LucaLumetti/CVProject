@@ -113,7 +113,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             axs[2].set_ylim(0,1)
             fig.tight_layout()
             fig.savefig('plots/loss.png', dpi=fig.dpi)
-            fig.close()
+            plt.close(fig)
     return
 
 if __name__ == '__main__':
