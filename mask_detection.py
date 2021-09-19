@@ -100,7 +100,7 @@ def color_quantization(img, bins=2, debug=False):
 # Function that given an img return a binary mask (np.array) of the surgical
 # mask detected in the image img. If facial landmarks are not detected, return
 # an empty np.array.
-def find_mask(img, debug=False):
+def find_mask(img, debug=True  ):
 
     # Keypoints detection
     keypoints = find_facial_landmarks(img, debug=debug)

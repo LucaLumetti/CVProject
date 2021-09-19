@@ -40,8 +40,8 @@ class FaceMaskDataset(Dataset):
         # 0001,/a/0001.jpg
         # 0002,/b/0002.jpg
         img_name = os.path.join(self.dataset_dir, self.images.iloc[index, 1])
-        mask_name = img_name.split(".", 1)
-        mask_name = mask_name[0] + "_mask." + mask_name[1]
+        mask_name = img_name.split(".", 2)
+        mask_name = mask_name[1] + "_mask." + mask_name[2]
         return (io.read_image(img_name), io.read_image(mask_name))
 
     def loader(self, **args):
