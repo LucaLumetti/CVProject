@@ -14,6 +14,8 @@ def create_mask(img, debug=False):
     if len(keypoints) == 0:
         return None
     cv2.fillPoly(mask, np.array([keypoints]), (255, 255, 255))
+    kernel = np.ones((3, 3), np.uint8)
+    mask =  cv2.dilate(mask, kernel, iterations=10)
     if debug:
         cv2.imshow('mask',mask)
         cv2.waitKey(0)
