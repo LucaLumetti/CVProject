@@ -30,6 +30,10 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             'r': [],
             }
 
+    accuracies = {
+            'd': []
+            }
+
     for i, (imgs, masks) in enumerate(dataloader):
         netG.zero_grad()
         netD.zero_grad()
@@ -54,6 +58,17 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         pred_pos_neg_imgs = netD(pos_neg_imgs, masks)
         pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
+        with torch.inference_mode():
+            mean_pos_pred = pred_pos_imgs.mean(dim=1)
+            mean_neg_pred = pred_neg_imgs.mean(dim=1)
+            mean_pos_pred[mean_pos_pred > 0.5] = 1
+            mean_pos_pred[mean_pos_pred <= 0.5] = 0
+            mean_neg_pred[mean_neg_pred > 0.5] = 0
+            mean_neg_pred[mean_neg_pred <= 0.5] = 1
+            accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
+            accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
+            accuracies['d'].append(accuracyD)
+
         # loss + backward D
         loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)
         losses['d'].append(loss_discriminator)
@@ -65,20 +80,18 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         losses['g'].append(loss_generator)
         losses['r'].append(loss_recon)
 
-        # these operations has been rearranged to avoid a autograd problem
-        # not 100% sure on why retain_graph=True
         loss_discriminator.backward(retain_graph=True)
-        # maybe i got why retain graph is needed, the backward on the discr also
-        # touch gradint that the generator has to use, then the first backward
-        # needs to retain graph, the second does not, i will leave this comment
-        # here for the future
         loss_gen_recon.backward()
 
         optimD.step()
         optimG.step()
         # every 100 img, print losses, update the graph, output an image as
         # example
-        print(f"[{i}]\tloss_g: {losses['g'][-1]}, loss_d: {losses['d'][-1]}, loss_r: {losses['r'][-1]}")
+        print(f"[{i}]\t" + \
+                f"loss_g: {losses['g'][-1]}, " + \
+                f"loss_d: {losses['d'][-1]}, " + \
+                f"loss_r: {losses['r'][-1]}, " + \
+                f"accuracy_d: {accuracies['d'][-1]}")
         if i%5 == 0:
             fig, axs = plt.subplots(2, 1)
             x_axis = range(len(losses['g']))
