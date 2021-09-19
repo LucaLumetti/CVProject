@@ -5,8 +5,8 @@ gan_inpainting/models
 !gan_inpainting/models/.gitkeep
 gan_inpainting/plots
 !gan_inpainting/plots/.gitkeep
+dataset
 __pycache__
 pip-log.txt
 *.log
 .idea
-dataset/
