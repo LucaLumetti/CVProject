@@ -42,6 +42,9 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         lossG.zero_grad()
         lossD.zero_grad()
 
+        imgs = imgs.to(device)
+        masks = masks.to(device)
+
         # change img range from [0,255] to [-1,+1]
         imgs = imgs / 127.5 - 1
 
