@@ -128,7 +128,7 @@ if __name__ == '__main__':
     config = Config('config.json')
     print(config)
     # using a fake dataset just to test the net until our dataset is not ready
-    dataset = FaceMaskDataset('../dataset/', 'maskffhq.csv')
+    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv')
     # dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
 
