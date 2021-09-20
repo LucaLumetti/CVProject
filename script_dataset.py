@@ -40,6 +40,7 @@ if __name__ == '__main__':
     split_folder = sys.argv[1].split('/')
     subfolder = split_folder[-2]
     filename = split_folder[-1]
+    csvf = open(f'{pathname.parent.parent.parent}/maskffhq.csv', 'a')
     path_to_mask = Path(f'{pathname.parent.parent.parent}' + \
             f'/masked_images/{subfolder}/{filename}')
     path_to_mask.parent.mkdir(parents=True, exist_ok=True)
@@ -52,5 +53,7 @@ if __name__ == '__main__':
     mask = create_mask(img, False)
     if mask is not None:
         cv2.imwrite(str(path_to_mask), mask)
+        csvf.write(f'{filename.split(".")[0]},{pathname.absolute()},{path_to_mask.absolute()}\n')
+        csvf.close()
     else:
         print(f"Face not found for {pathname}")
