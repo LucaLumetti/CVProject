@@ -133,8 +133,8 @@ if __name__ == '__main__':
     dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
 
-    netG = Generator().to(device)
-    netD = Discriminator().to(device)
+    netG = Generator(input_size=config.input_size).to(device)
+    netD = Discriminator(input_size=config.input_size).to(device)
 
     optimG = torch.optim.Adam(
             netG.parameters(),
