@@ -6,7 +6,8 @@ import cv2
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torchvision import io
+from torchvision.io import read_image
+from torchvision.utils import save_image
 
 from torch.utils.data import Dataset, DataLoader
 
@@ -39,17 +40,9 @@ class FaceMaskDataset(Dataset):
         img_name = os.path.join(self.dataset_dir, self.images.iloc[index, 1])
         mask_name = os.path.join(self.dataset_dir, self.images.iloc[index, 2])
 
-        img = cv2.imread(img_name)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        mask = cv2.imread(mask_name)
-        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        img = read_image(img_name)
+        mask = read_image(mask_name)
         mask = mask // 255
-
-        img = torch.tensor(img)
-        mask = torch.tensor(mask)
-        img = torch.swapaxes(img, 0, 2)
-        mask = mask[None,:,:]
 
         return img, mask
 

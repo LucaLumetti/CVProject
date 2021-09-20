@@ -49,7 +49,6 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
 
         # change img range from [0,255] to [-1,+1]
         imgs = imgs / 127.5 - 1
-        print(imgs.shape)
 
         # forward G
         coarse_out, refined_out = netG(imgs, masks)
@@ -64,16 +63,16 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         pred_pos_neg_imgs = netD(pos_neg_imgs, masks)
         pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
-        with torch.inference_mode():
-            mean_pos_pred = pred_pos_imgs.mean(dim=1)
-            mean_neg_pred = pred_neg_imgs.mean(dim=1)
-            mean_pos_pred[mean_pos_pred > 0.5] = 1
-            mean_pos_pred[mean_pos_pred <= 0.5] = 0
-            mean_neg_pred[mean_neg_pred > 0.5] = 0
-            mean_neg_pred[mean_neg_pred <= 0.5] = 1
-            accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
-            accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
-            accuracies['d'].append(accuracyD)
+        # with torch.inference_mode():
+        mean_pos_pred = pred_pos_imgs.mean(dim=1)
+        mean_neg_pred = pred_neg_imgs.mean(dim=1)
+        mean_pos_pred[mean_pos_pred > 0.5] = 1
+        mean_pos_pred[mean_pos_pred <= 0.5] = 0
+        mean_neg_pred[mean_neg_pred > 0.5] = 0
+        mean_neg_pred[mean_neg_pred <= 0.5] = 1
+        accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
+        accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
+        accuracies['d'].append(accuracyD)
 
         # loss + backward D
         loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)
@@ -121,16 +120,16 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             fig.savefig('plots/loss.png', dpi=fig.dpi)
             plt.close(fig)
 
-            save_image(checkpoint_recon, 'plots/recon.png')
-            save_image(checkpoint_img, 'plots/orig.png')
+            save_image(checkpoint_recon/255, 'plots/recon.png')
+            save_image(checkpoint_img/255, 'plots/orig.png')
     return
 
 if __name__ == '__main__':
     config = Config('config.json')
     print(config)
     # using a fake dataset just to test the net until our dataset is not ready
-    # dataset = FaceMaskDataset('../dataset/', 'maskffhq.csv')
-    dataset = FakeDataset()
+    dataset = FaceMaskDataset('../dataset/', 'maskffhq.csv')
+    # dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
 
     netG = Generator(input_size=config.input_size).to(device)

@@ -16,7 +16,7 @@ def get_pad(in_,  ksize, stride, atrous=1):
 # The img size dependency can be removed easy by setting a variable and *2 or /2
 # each time we down/upsample
 class Generator(nn.Module):
-    def __init__(self, input_channels=5, input_size=256, cnum=32):
+    def __init__(self, input_channels=5, input_size=256, cnum=4):
         super(Generator, self).__init__()
         if input_size%4 != 0:
             raise 'input_size% != 0'
@@ -73,7 +73,7 @@ class Generator(nn.Module):
                 GatedConv(2*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1), activation=nn.ReLU()),
                 # self attention
-                SelfAttention(4*self.cnum, 'relu', with_attn=False),
+                # SelfAttention(4*self.cnum, 'relu', with_attn=False),
                 # conv
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
