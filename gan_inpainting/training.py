@@ -121,8 +121,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             fig.savefig('plots/loss.png', dpi=fig.dpi)
             plt.close(fig)
 
-            save_image(checkpoint_recon, 'plot/recon.png')
-            save_image(checkpoint_img, 'plot/orig.png')
+            save_image(checkpoint_recon, 'plots/recon.png')
+            save_image(checkpoint_img, 'plots/orig.png')
     return
 
 if __name__ == '__main__':
