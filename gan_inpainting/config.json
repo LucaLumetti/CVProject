@@ -1,6 +1,6 @@
 {
   "dataset_path": "data/",
-  "batch_size": 2,
+  "batch_size": 1,
   "epoch": 10,
   "learning_rate": 0.0001
 }

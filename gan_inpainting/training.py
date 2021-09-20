@@ -1,8 +1,10 @@
 import numpy as np
+import cv2
 
 import torch
 import torchvision
 from torchvision import transforms
+from torchvision.utils import save_image
 import torch.nn.functional as F
 import torch.nn as nn
 
@@ -47,6 +49,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
 
         # change img range from [0,255] to [-1,+1]
         imgs = imgs / 127.5 - 1
+        print(imgs.shape)
 
         # forward G
         coarse_out, refined_out = netG(imgs, masks)
@@ -90,12 +93,15 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         optimG.step()
         # every 100 img, print losses, update the graph, output an image as
         # example
-        print(f"[{i}]\t" + \
-                f"loss_g: {losses['g'][-1]}, " + \
-                f"loss_d: {losses['d'][-1]}, " + \
-                f"loss_r: {losses['r'][-1]}, " + \
-                f"accuracy_d: {accuracies['d'][-1]}")
-        if i%1 == 0:
+        if i % 1 == 0:
+            print(f"[{i}]\t" + \
+                    f"loss_g: {losses['g'][-1]}, " + \
+                    f"loss_d: {losses['d'][-1]}, " + \
+                    f"loss_r: {losses['r'][-1]}, " + \
+                    f"accuracy_d: {accuracies['d'][-1]}")
+            checkpoint_recon = ((reconstructed_imgs[0]+1)*127.5)
+            checkpoint_img = ((imgs[0]+1)*127.5)
+
             fig, axs = plt.subplots(3, 1)
             x_axis = range(len(losses['g']))
             # loss g
@@ -114,12 +120,16 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             fig.tight_layout()
             fig.savefig('plots/loss.png', dpi=fig.dpi)
             plt.close(fig)
+
+            save_image(checkpoint_recon, 'plot/recon.png')
+            save_image(checkpoint_img, 'plot/orig.png')
     return
 
 if __name__ == '__main__':
     config = Config('config.json')
     print(config)
     # using a fake dataset just to test the net until our dataset is not ready
+    # dataset = FaceMaskDataset('../dataset/', 'maskffhq.csv')
     dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
 
