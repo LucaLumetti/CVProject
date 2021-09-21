@@ -63,6 +63,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
         pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
+        # inference mode will be faster but can't make inplace op inside it
         with torch.no_grad():
             mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
             mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
@@ -72,11 +73,11 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             mean_neg_pred[mean_neg_pred <= 0.5] = 1
             accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
             accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
-            accuracies['d'].append(accuracyD)
+            accuracies['d'].append(accuracyD.item())
 
         # loss + backward D
         loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)
-        losses['d'].append(loss_discriminator)
+        losses['d'].append(loss_discriminator.item())
         loss_discriminator.backward(retain_graph=True)
         optimD.step()
 
@@ -92,8 +93,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         loss_generator = lossG(pred_neg_imgs)
         loss_recon = lossRecon(imgs, coarse_out, refined_out, dmasks)
         loss_gen_recon = loss_generator + loss_recon
-        losses['g'].append(loss_generator)
-        losses['r'].append(loss_recon)
+        losses['g'].append(loss_generator.item())
+        losses['r'].append(loss_recon.item())
 
         loss_gen_recon.backward()
 
