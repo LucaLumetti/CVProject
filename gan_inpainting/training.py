@@ -59,36 +59,44 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
 
         # forward D
-        pos_neg_imgs, masks, _ = torch.split(pos_neg_imgs, (3,1,1), dim=1)
-        pred_pos_neg_imgs = netD(pos_neg_imgs, masks)
+        pos_neg_imgs, dmasks, _ = torch.split(pos_neg_imgs, (3,1,1), dim=1)
+        pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
         pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
-        # with torch.inference_mode():
-        mean_pos_pred = pred_pos_imgs.mean(dim=1)
-        mean_neg_pred = pred_neg_imgs.mean(dim=1)
-        mean_pos_pred[mean_pos_pred > 0.5] = 1
-        mean_pos_pred[mean_pos_pred <= 0.5] = 0
-        mean_neg_pred[mean_neg_pred > 0.5] = 0
-        mean_neg_pred[mean_neg_pred <= 0.5] = 1
-        accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
-        accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
-        accuracies['d'].append(accuracyD)
+        with torch.no_grad():
+            mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
+            mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
+            mean_pos_pred[mean_pos_pred > 0.5] = 1
+            mean_pos_pred[mean_pos_pred <= 0.5] = 0
+            mean_neg_pred[mean_neg_pred > 0.5] = 0
+            mean_neg_pred[mean_neg_pred <= 0.5] = 1
+            accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
+            accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
+            accuracies['d'].append(accuracyD)
 
         # loss + backward D
         loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)
         losses['d'].append(loss_discriminator)
+        loss_discriminator.backward(retain_graph=True)
+        optimD.step()
+
+        netG.zero_grad()
+        netD.zero_grad()
+        optimG.zero_grad()
+        optimD.zero_grad()
+        lossG.zero_grad()
+        lossD.zero_grad()
 
         # loss + backward G
+        pred_neg_imgs = netD(reconstructed_imgs, masks)
         loss_generator = lossG(pred_neg_imgs)
-        loss_recon = lossRecon(imgs, coarse_out, refined_out, masks)
+        loss_recon = lossRecon(imgs, coarse_out, refined_out, dmasks)
         loss_gen_recon = loss_generator + loss_recon
         losses['g'].append(loss_generator)
         losses['r'].append(loss_recon)
 
-        loss_discriminator.backward(retain_graph=True)
         loss_gen_recon.backward()
 
-        optimD.step()
         optimG.step()
         # every 100 img, print losses, update the graph, output an image as
         # example
