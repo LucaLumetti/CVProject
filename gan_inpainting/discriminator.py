@@ -12,7 +12,7 @@ def get_pad(in_,  ksize, stride, atrous=1):
     return int(((out_ - 1) * stride + atrous*(ksize-1) + 1 - in_)/2)
 
 class Discriminator(nn.Module):
-    def __init__(self, input_channels=4, input_size=1024, cnum=16):
+    def __init__(self, input_channels=4, input_size=1024, cnum=8):
         super(Discriminator, self).__init__()
         self.cnum = cnum
         self.size = input_size
