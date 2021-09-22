@@ -16,7 +16,7 @@ def get_pad(in_,  ksize, stride, atrous=1):
 # The img size dependency can be removed easy by setting a variable and *2 or /2
 # each time we down/upsample
 class Generator(nn.Module):
-    def __init__(self, input_channels=5, input_size=256, cnum=4):
+    def __init__(self, input_channels=5, input_size=256, cnum=16):
         super(Generator, self).__init__()
         if input_size%4 != 0:
             raise 'input_size% != 0'
