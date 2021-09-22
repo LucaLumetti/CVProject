@@ -88,6 +88,10 @@ class TrainingMetrics:
 
             img = img.to(device)
             mask = mask.to(device)
+
+            # change img range from [0,255] to [-1,+1]
+            img = img / 127.5 - 1
+
             coarse_out, refined_out = netG(imgs, masks)
             reconstructed_imgs = refined_out * masks + imgs * (1 - masks)
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
