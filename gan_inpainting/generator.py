@@ -16,7 +16,7 @@ def get_pad(in_,  ksize, stride, atrous=1):
 # The img size dependency can be removed easy by setting a variable and *2 or /2
 # each time we down/upsample
 class Generator(nn.Module):
-    def __init__(self, input_channels=5, input_size=256, cnum=16):
+    def __init__(self, input_channels=4, input_size=1024, cnum=16):
         super(Generator, self).__init__()
         if input_size%4 != 0:
             raise 'input_size% != 0'
@@ -93,14 +93,14 @@ class Generator(nn.Module):
     def forward(self, input_images, input_masks):
         # coarse
         masked_images = input_images*(1-input_masks)
-        x = torch.cat([masked_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
+        x = torch.cat([masked_images, input_masks], dim=1)
         x = self.coarse_net(x)
         x = torch.tanh(x)
         coarse_result = x
 
         # refine
         masked_images = input_images*(1-input_masks) + coarse_result*input_masks
-        x = torch.cat([masked_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
+        x = torch.cat([masked_images, input_masks], dim=1)
         xnow = x
 
         conv_out = self.refine_conv_net(x)

@@ -55,8 +55,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             coarse_out, refined_out = netG(imgs, masks)
             reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
-            pos_imgs = torch.cat([imgs, masks, torch.full_like(masks, 1.)], dim=1)
-            neg_imgs = torch.cat([reconstructed_imgs, masks, torch.full_like(masks, 1.)], dim=1)
+            pos_imgs = torch.cat([imgs, masks], dim=1)
+            neg_imgs = torch.cat([reconstructed_imgs, masks], dim=1)
             pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
 
             # forward D

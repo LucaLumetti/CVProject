@@ -11,7 +11,7 @@ def get_pad(in_,  ksize, stride, atrous=1):
     return int(((out_ - 1) * stride + atrous*(ksize-1) + 1 - in_)/2)
 
 class Discriminator(nn.Module):
-    def __init__(self, input_channels=5, input_size=1024, cnum=16):
+    def __init__(self, input_channels=4, input_size=1024, cnum=16):
         super(Discriminator, self).__init__()
         self.cnum = cnum
         self.size = input_size
@@ -31,7 +31,7 @@ class Discriminator(nn.Module):
 
     def forward(self, input_images, input_masks):
         # masked_images = input_images*(1-input_masks) # can be this usefull?
-        x = torch.cat([input_images, input_masks, torch.full_like(input_masks, 1.)], dim=1)
+        x = torch.cat([input_images, input_masks], dim=1)
         x = self.discriminator_net(x)
         x = x.view((x.size(0),-1))
         # x = torch.mean(x, dim=1) # maybe this is wrong bc already done in the loss
