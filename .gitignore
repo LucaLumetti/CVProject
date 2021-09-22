@@ -5,6 +5,7 @@ gan_inpainting/models
 !gan_inpainting/models/.gitkeep
 gan_inpainting/plots
 !gan_inpainting/plots/.gitkeep
+gan_inpainting/config.json
 dataset
 __pycache__
 pip-log.txt
