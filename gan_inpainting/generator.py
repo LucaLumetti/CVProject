@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 from layers import GatedConv, GatedDeConv, SelfAttention
+from init_weights import init_weights
 
 def get_pad(in_,  ksize, stride, atrous=1):
     out_ = np.ceil(float(in_)/stride)
@@ -19,7 +20,7 @@ class Generator(nn.Module):
     def __init__(self, input_channels=4, input_size=1024, cnum=16):
         super(Generator, self).__init__()
         if input_size%4 != 0:
-            raise 'input_size% != 0'
+            raise 'input_size%4 != 0'
 
         self.cnum = cnum
         self.size = input_size # check it to be a power of 2
@@ -89,6 +90,10 @@ class Generator(nn.Module):
                 GatedConv(self.cnum, self.cnum//2, 3, 1, padding=get_pad(self.size//2, 3, 1)),
                 GatedConv(self.cnum//2, 3, 3, 1, padding=get_pad(self.size//2, 3, 1), activation=None),
                 )
+        self.coarse_net.apply(init_weights)
+        self.refine_conv_net.apply(init_weights)
+        self.refine_att_net.apply(init_weights)
+        self.refine_all_net.apply(init_weights)
 
     def forward(self, input_images, input_masks):
         # coarse
@@ -120,11 +125,11 @@ if __name__ == '__main__':
     # test if the generator can accept a Nx3x256x256 tensor + Nx1x256x256 tensor
     # and output a Nx3xSIZExSIZE tensor without any error
     N = 2 # number of images/mask to feed in the net
-    SIZE = 1024
+    SIZE = 64
     input_images = torch.rand((N, 3, SIZE, SIZE))
     input_masks = torch.randint(0, 2, (N, 1, SIZE, SIZE))
 
-    net = Generator(input_size=N)
+    net = Generator(input_size=SIZE)
     coarse_out, out = net(input_images, input_masks)
     if out.shape == input_images.shape and coarse_out.shape == out.shape:
         print(f'Shapes after forward are ok!')

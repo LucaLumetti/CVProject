@@ -102,7 +102,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             optimG.step()
             # every 100 img, print losses, update the graph, output an image as
             # example
-            if i % 1 == 0:
+            if i % 10 == 0:
                 print(f"[{i}]\t" + \
                         f"loss_g: {losses['g'][-1]}, " + \
                         f"loss_d: {losses['d'][-1]}, " + \

@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 
 from layers import GatedConv, GatedDeConv, SelfAttention, SpectralNormConv
+from init_weights import init_weights
 
 def get_pad(in_,  ksize, stride, atrous=1):
     out_ = np.ceil(float(in_)/stride)
@@ -26,8 +27,9 @@ class Discriminator(nn.Module):
                 # SelfAttention(8*self.cnum, 'relu'),
                 # GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(4, 5, 2)),
                 )
-        self.linear = nn.Linear(8*self.cnum*2*2, 1)
-        self.sigmoid = nn.Sigmoid()
+        # self.linear = nn.Linear(8*self.cnum*2*2, 1)
+        # self.sigmoid = nn.Sigmoid()
+        self.discriminator_net.apply(init_weights)
 
     def forward(self, input_images, input_masks):
         # masked_images = input_images*(1-input_masks) # can be this usefull?
@@ -44,11 +46,11 @@ if __name__ == '__main__':
     # test if the discriminator can accept a Nx3x256x256 tensor
     # and output a 1 or 0
     N = 4 # number of images/mask to feed in the net
-    SIZE = 1024
+    SIZE = 64
     input_images = torch.rand((N, 3, SIZE, SIZE))
     input_masks = torch.randint(0, 2, (N, 1, SIZE, SIZE))
 
-    net = Discriminator()
+    net = Discriminator(input_size=SIZE)
     out = net(input_images, input_masks)
     if out.shape == torch.Size([N]):
         print(f'Shapes after forward are ok!')
