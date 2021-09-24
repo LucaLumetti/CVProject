@@ -74,7 +74,6 @@ def test(netG, netD, lossG, lossD, dataloader):
             output = (reconstructed_imgs + 1) * 127.5
             output = torch.flip(output,[-1])
 
-        # TODO: need to save image somewhere, this is a temporary location
         cv2.imwrite(config.test_dir+'/output/'+filename,output)
     return
 
