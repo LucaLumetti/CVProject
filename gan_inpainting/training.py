@@ -55,25 +55,26 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             coarse_out, refined_out = netG(imgs, masks)
             reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
-            pos_imgs = torch.cat([imgs, masks], dim=1)
-            neg_imgs = torch.cat([reconstructed_imgs, masks], dim=1)
-            pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
+            # pos_imgs = torch.cat([imgs, masks], dim=1)
+            # neg_imgs = torch.cat([reconstructed_imgs, masks], dim=1)
+            # pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
+            pos_neg_imgs = torch.cat([imgs, reconstructed_imgs], dim=0).type(torch.FloatTensor)
+            dmasks = torch.cat([masks, masks], dim=0).type(torch.FloatTensor)
 
             # forward D
-            pos_neg_imgs, dmasks = torch.split(pos_neg_imgs, (3,1), dim=1)
+            # pos_neg_imgs, dmasks = torch.split(pos_neg_imgs, (3,1), dim=1)
             pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
             pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
-            # inference mode will be faster but can't make inplace op inside it
-            with torch.no_grad():
+            # canculate accuracy of D
+            with torch.inference_mode():
                 mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
                 mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
-                mean_pos_pred[mean_pos_pred > 0.5] = 1
-                mean_pos_pred[mean_pos_pred <= 0.5] = 0
-                mean_neg_pred[mean_neg_pred > 0.5] = 0
-                mean_neg_pred[mean_neg_pred <= 0.5] = 1
+                mean_pos_pred = torch.where(mean_pos_pred > 0.5, 1, 0).type(torch.FloatTensor)
+                mean_neg_pred = torch.where(mean_neg_pred > 0.5, 0, 1).type(torch.FloatTensor)
                 accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
-                accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
+                tot_elem = mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
+                accuracyD /= tot_elem
                 accuracies['d'].append(accuracyD.item())
 
             # loss + backward D
