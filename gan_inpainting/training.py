@@ -59,9 +59,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             # pos_imgs = torch.cat([imgs, masks], dim=1)
             # neg_imgs = torch.cat([reconstructed_imgs, masks], dim=1)
             # pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
-            pos_neg_imgs = torch.cat([imgs, reconstructed_imgs], dim=0).type(torch.FloatTensor)
-            dmasks = torch.cat([masks, masks], dim=0).type(torch.FloatTensor)
-            print(dmasks.dtype)
+            pos_neg_imgs = torch.cat([imgs, reconstructed_imgs], dim=0)
+            dmasks = torch.cat([masks, masks], dim=0)
 
             # forward D
             # pos_neg_imgs, dmasks = torch.split(pos_neg_imgs, (3,1), dim=1)
