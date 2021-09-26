@@ -43,6 +43,17 @@ class DiscriminatorLoss(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, pos, neg):
+        pos = - torch.mean(pos)
+        neg = torch.mean(neg)
+        loss_d = pos + neg
+        return loss_d
+
+class DiscriminatorHingeLoss(nn.Module):
+    def __init__(self):
+        super(DiscriminatorLoss, self).__init__()
+        self.relu = nn.ReLU()
+
+    def forward(self, pos, neg):
         hinge_pos = torch.mean(self.relu(1 - pos))
         hinge_neg = torch.mean(self.relu(1 + neg))
         loss_d = 0.5*(hinge_pos + hinge_neg)
