@@ -50,6 +50,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
 
             # change img range from [0,255] to [-1,+1]
             imgs = imgs / 127.5 - 1
+            masks = masks / 1.
 
             # forward G
             coarse_out, refined_out = netG(imgs, masks)
@@ -60,6 +61,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             # pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
             pos_neg_imgs = torch.cat([imgs, reconstructed_imgs], dim=0).type(torch.FloatTensor)
             dmasks = torch.cat([masks, masks], dim=0).type(torch.FloatTensor)
+            print(dmasks.dtype)
 
             # forward D
             # pos_neg_imgs, dmasks = torch.split(pos_neg_imgs, (3,1), dim=1)
