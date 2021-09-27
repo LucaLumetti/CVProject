@@ -26,11 +26,11 @@ The pipeline will be structured as follows:
 - Reconstruct the missing parts of the face in the first image by using a GAN network with a contrastive learning approach. (Deep learning network with a retrieval component)
 
 ## TODO
-- Weights should be initialized with Xavier (or similar)
-- Write the script to test the network (test.py)
-- Metrics analisys in training.py could be rewritter in a separated class
-- It would be cool to test the network on the same image while training, in
+- [x] Weights should be initialized with Xavier (or similar)
+- [ ] Write the script to test the network (test.py)
+- [ ] Metrics analisys in training.py could be rewritter in a separated class
+- [ ] It would be cool to test the network on the same image while training, in
   order to compare the GAN at different epochs
-- Self attention layer generate CUDA out of memory
-- Low number of channels in generator and discriminator always bc of CUDA out of
+- [ ] Self attention layer generate CUDA out of memory
+- [ ] Low number of channels in generator and discriminator always bc of CUDA out of
   memory
