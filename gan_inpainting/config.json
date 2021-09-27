@@ -1,5 +1,5 @@
 {
-  "dataset_dir": "data/",
+  "dataset_dir": "../dataset",
   "batch_size": 1,
   "input_size": 1024,
   "epoch": 10,

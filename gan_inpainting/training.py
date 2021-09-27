@@ -57,6 +57,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
         pos_neg_imgs, masks, _ = torch.split(pos_neg_imgs, (3,1,1), dim=1)
         pred_pos_neg_imgs = netD(pos_neg_imgs, masks)
 
+        pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
         # loss + backward D
         loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)

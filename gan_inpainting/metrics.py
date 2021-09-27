@@ -1,6 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 from torchvision.utils import save_image
+import numpy as np
 
 class TrainingMetrics:
 
@@ -10,7 +11,7 @@ class TrainingMetrics:
         self.lossR = []
         self.accuracy = []
         self.dataloader = dataloader
-        self.img, self.mask = self.dataloader[np.random.random_integers(0, lossG.shape[0])]
+        self.img, self.mask = next(iter(dataloader))
 
     '''
         Parameters:
@@ -36,14 +37,14 @@ class TrainingMetrics:
 
         mean_neg_pred[mean_neg_pred > 0.5] = 1
         mean_neg_pred[mean_neg_pred <= 0.5] = 0
-        mean_neg_pred = ~mean_neg_pred
+        mean_neg_pred = torch.Tensor([1 if elem == 0 else 0 for elem in mean_neg_pred])
 
         accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
         accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
         self.accuracy.append(accuracyD)
 
         # every 100 img, print losses, update the graph, output an image as example
-        if lossG.shape[0] % 100 == 0:
+        if len(self.lossG) % 100 == 0:
             print(f"[{i}]\t" + \
                   f"loss_g: {self.lossG[-1]}, " + \
                   f"loss_d: {self.lossD[-1]}, " + \
