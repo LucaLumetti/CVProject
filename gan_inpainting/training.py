@@ -104,7 +104,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             optimG.step()
             # every 100 img, print losses, update the graph, output an image as
             # example
-            if i % 10 == 0:
+            if i % 100 == 0:
                 print(f"[{i}]\t" + \
                         f"loss_g: {losses['g'][-1]}, " + \
                         f"loss_d: {losses['d'][-1]}, " + \
@@ -132,7 +132,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
                 fig.savefig('plots/loss.png', dpi=fig.dpi)
                 plt.close(fig)
 
-                save_image(checkpoint_recon/255, 'plots/recon.png')
+                save_image(checkpoint_recon/255, f'plots/recon_{i}_{ep}.png')
                 save_image(checkpoint_img/255, 'plots/orig.png')
     return
 
