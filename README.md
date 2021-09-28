@@ -35,4 +35,5 @@ The pipeline will be structured as follows:
 - [ ] Low number of channels in generator and discriminator always bc of CUDA out of
   memory
 - [ ] Give the possibility to resume a training using the saved model as
+- [ ] Give the option to trasform images to 512x512 and 256x256 before training
   starting point
