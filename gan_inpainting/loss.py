@@ -50,7 +50,7 @@ class DiscriminatorLoss(nn.Module):
 
 class DiscriminatorHingeLoss(nn.Module):
     def __init__(self):
-        super(DiscriminatorLoss, self).__init__()
+        super(DiscriminatorHingeLoss, self).__init__()
         self.relu = nn.ReLU()
 
     def forward(self, pos, neg):
