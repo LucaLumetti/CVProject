@@ -27,13 +27,13 @@ The pipeline will be structured as follows:
 
 ## TODO
 - [x] Weights should be initialized with Xavier (or similar)
-- [ ] Write the script to test the network (test.py)
-- [ ] Metrics analisys in training.py could be rewritter in a separated class
+- [ ] Test the script to test the network (testing.py)
+- [ ] Metrics analysis in training.py could be rewritten in a separated class
 - [ ] It would be cool to test the network on the same image while training, in
   order to compare the GAN at different epochs
 - [ ] Self attention layer generate CUDA out of memory
 - [ ] Low number of channels in generator and discriminator always bc of CUDA out of
   memory
 - [ ] Give the possibility to resume a training using the saved model as
-- [ ] Give the option to trasform images to 512x512 and 256x256 before training
+- [ ] Give the option to transform images to 512x512 and 256x256 before training
   starting point
