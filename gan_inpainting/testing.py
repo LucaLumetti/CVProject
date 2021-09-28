@@ -38,12 +38,14 @@ def test(netG, netD, lossG, lossD, dataloader):
         reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
         # forward G
-        pos_imgs = torch.cat([imgs, masks], dim=1)
-        neg_imgs = torch.cat([reconstructed_imgs, masks], dim=1)
-        pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
+        #pos_imgs = torch.cat([imgs, masks], dim=1)
+        #neg_imgs = torch.cat([reconstructed_imgs, masks], dim=1)
+        #pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
+        pos_neg_imgs = torch.cat([img,reconstructed_imgs],dim=0)
+        dmasks = torch.cat([masks,masks],dim=0)
 
         # forward D
-        pos_neg_imgs, dmasks = torch.split(pos_neg_imgs, (3, 1), dim=1)
+        #pos_neg_imgs, dmasks = torch.split(pos_neg_imgs, (3, 1), dim=1)
         pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
         pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
@@ -52,19 +54,17 @@ def test(netG, netD, lossG, lossD, dataloader):
         with torch.no_grad():
             mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
             mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
-            mean_pos_pred[mean_pos_pred > 0.5] = 1
-            mean_pos_pred[mean_pos_pred <= 0.5] = 0
-            mean_neg_pred[mean_neg_pred > 0.5] = 0
-            mean_neg_pred[mean_neg_pred <= 0.5] = 1
+            mean_pos_pred= torch.where(mean_pos_pred > 0.5,1,0).type(torch.FloatTensor)
+            mean_pos_neg= torch.where(mean_pos_pred < 0.5,0,1).type(torch.FloatTensor)
             accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
             accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
             accuracies['d'].append(accuracyD.item())
 
-            # loss + backward D
+            # loss D
             loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)
             losses['d'].append(loss_discriminator.item())
 
-            # loss + backward G
+            # loss G
             pred_neg_imgs = netD(reconstructed_imgs, mask)
             loss_generator = lossG(pred_neg_imgs)
             loss_recon = lossRecon(img, coarse_out, refined_out, dmasks)
