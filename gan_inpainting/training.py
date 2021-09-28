@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 from generator import Generator
 from discriminator import Discriminator
-from loss import GeneratorLoss, DiscriminatorLoss, L1ReconLoss
+from loss import *
 from dataset import FakeDataset, FaceMaskDataset
 from config import Config
 
