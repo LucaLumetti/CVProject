@@ -10,6 +10,8 @@ class TrainingMetrics:
         self.lossD = []
         self.lossR = []
         self.accuracy = []
+        self.difference = []
+        self.max_distance = None
         self.dataloader = dataloader
         self.img, self.mask = next(iter(dataloader))
 
@@ -51,7 +53,7 @@ class TrainingMetrics:
                   f"loss_r: {self.lossR[-1]}, " + \
                   f"accuracy_d: {accuracy[-1]}")
 
-            fig, axs = plt.subplots(3, 1)
+            fig, axs = plt.subplots(4, 1)
             x_axis = range(len(self.lossG))
             # loss g
             axs[0].plot(x_axis, self.lossG, x_axis, self.lossR)
@@ -66,21 +68,36 @@ class TrainingMetrics:
             axs[2].set_xlabel('iterations')
             axs[2].set_ylabel('accuracy')
             axs[2].set_ylim(0, 1)
-            fig.tight_layout()
-            fig.savefig('plots/loss.png', dpi=fig.dpi)
-            plt.close(fig)
+
 
             #using CPU
             #img = self.img.to(device)
             #mask = self.mask.to(device)
 
             # change img range from [0,255] to [-1,+1]
-            img = img / 127.5 - 1
+            img = self.img / 127.5 - 1
 
-            coarse_out, refined_out = netG(imgs, masks)
-            reconstructed_imgs = refined_out * masks + imgs * (1 - masks)
+            coarse_out, refined_out = netG(img, self.mask)
+            reconstructed_imgs = refined_out * self.mask + imgs * (1 - self.mask)
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
+
+            self.difference.append(self._mse(checkpoint_img,checkpoint_recon))
+            #plot MSE
+            i = range(len(self.difference))
+            axs[3].plot(i, self.difference)
+            axs[3].set_xlabel('checkpoint')
+            axs[3].set_ylabel('MSE')
+        
+            fig.tight_layout()
+            fig.savefig('plots/loss.png', dpi=fig.dpi)
+            plt.close(fig)
+
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
+
+    def _mse(self, img1, img2):
+        err = np.sum((img1.astype(float)-img2.astype(float))**2)
+        err /= float(img1.shape[0]*img1.shape[1])
+        return err
 
