@@ -81,14 +81,14 @@ class TrainingMetrics:
             reconstructed_imgs = refined_out * self.mask + imgs * (1 - self.mask)
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
-
+            #calculate MSE
             self.difference.append(self._mse(checkpoint_img,checkpoint_recon))
             #plot MSE
             i = range(len(self.difference))
             axs[3].plot(i, self.difference)
             axs[3].set_xlabel('checkpoint')
             axs[3].set_ylabel('MSE')
-        
+
             fig.tight_layout()
             fig.savefig('plots/loss.png', dpi=fig.dpi)
             plt.close(fig)
