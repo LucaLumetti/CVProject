@@ -159,7 +159,7 @@ if __name__ == '__main__':
 
     lossG = GeneratorLoss()
     lossRecon = L1ReconLoss() # in the original paper, all alphas == 1
-    lossD = DiscriminatorLoss()
+    lossD = DiscriminatorHingeLoss()
 
     train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader)
 
