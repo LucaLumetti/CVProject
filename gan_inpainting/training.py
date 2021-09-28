@@ -3,7 +3,7 @@ import cv2
 
 import torch
 import torchvision
-from torchvision import transforms
+from torchvision import transforms as T
 from torchvision.utils import save_image
 import torch.nn.functional as F
 import torch.nn as nn
@@ -102,9 +102,9 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             loss_gen_recon.backward()
 
             optimG.step()
-            # every 100 img, print losses, update the graph, output an image as
+            # every 500 img, print losses, update the graph, output an image as
             # example
-            if i % 100 == 0:
+            if i % 500 == 0:
                 print(f"[{i}]\t" + \
                         f"loss_g: {losses['g'][-1]}, " + \
                         f"loss_d: {losses['d'][-1]}, " + \
@@ -139,8 +139,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
 if __name__ == '__main__':
     config = Config('config.json')
     print(config)
-    # using a fake dataset just to test the net until our dataset is not ready
-    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv')
+    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(256))
     # dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
 
