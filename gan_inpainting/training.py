@@ -123,7 +123,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
                 fig, axs = plt.subplots(3, 1)
                 x_axis = range(len(losses['g']))
                 # loss g
-                axs[0].plot(x_axis, losses['g'], x_axis, losses['r'])
+                axs[0].plot(x_axis, losses['g'], x_axis, losses['r'], x_axis, losses['tv'])
                 axs[0].set_xlabel('iterations')
                 axs[0].set_ylabel('loss')
                 # loss d
