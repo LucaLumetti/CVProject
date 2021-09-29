@@ -144,7 +144,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
 if __name__ == '__main__':
     config = Config('config.json')
     print(config)
-    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(256))
+    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
     # dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
 
