@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 import numpy as np
 
+from sklearn.metric import 
+
 class TrainingMetrics:
 
     def __init__(self, dataloader):
@@ -70,6 +72,9 @@ class TrainingMetrics:
             axs[2].set_ylabel('accuracy')
             axs[2].set_ylim(0, 1)
 
+            fig.tight_layout()
+            fig.savefig('plots/loss.png', dpi=fig.dpi)
+            plt.close(fig)
 
             #using CPU
             #img = self.img.to(device)
@@ -82,26 +87,8 @@ class TrainingMetrics:
             reconstructed_imgs = refined_out * self.mask + imgs * (1 - self.mask)
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
-            '''
-            #calculate MSE
-            self.difference.append(self._mse(checkpoint_img,checkpoint_recon))
-            #plot MSE
-            i = range(len(self.difference))
-            axs[3].plot(i, self.difference)
-            axs[3].set_xlabel('checkpoint')
-            axs[3].set_ylabel('MSE')
-            '''
-
-            fig.tight_layout()
-            fig.savefig('plots/loss.png', dpi=fig.dpi)
-            plt.close(fig)
 
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
 
-    '''
-    def _mse(self, img1, img2):
-        err = np.sum((img1.astype(float)-img2.astype(float))**2)
-        err /= float(img1.shape[0]*img1.shape[1])
-        return err
-    '''
+
