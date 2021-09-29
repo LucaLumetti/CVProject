@@ -118,16 +118,16 @@ class MultiDilationResnetBlock(nn.Module):
             bias=True):
         super(MultiDilationResnetBlock, self).__init__()
 
-        self.branch1 = GatedConv(input_channels, input_channels//8, 3, 1, 2, 2, activation=nn.ReLU())
-        self.branch2 = GatedConv(input_channels, input_channels//8, 3, 1, 3, 3, activation=nn.ReLU())
-        self.branch3 = GatedConv(input_channels, input_channels//8, 3, 1, 4, 4, activation=nn.ReLU())
-        self.branch4 = GatedConv(input_channels, input_channels//8, 3, 1, 5, 5, activation=nn.ReLU())
-        self.branch5 = GatedConv(input_channels, input_channels//8, 3, 1, 6, 6, activation=nn.ReLU())
-        self.branch6 = GatedConv(input_channels, input_channels//8, 3, 1, 8, 8, activation=nn.ReLU())
-        self.branch7 = GatedConv(input_channels, input_channels//8, 3, 1, 10, 10, activation=nn.ReLU())
-        self.branch8 = GatedConv(input_channels, input_channels//8, 3, 1, 1, 1, activation=nn.ReLU())
+        self.branch1 = GatedConv(input_channels, output_channels//8, 3, 1, 2, 2, activation=nn.ReLU())
+        self.branch2 = GatedConv(input_channels, output_channels//8, 3, 1, 3, 3, activation=nn.ReLU())
+        self.branch3 = GatedConv(input_channels, output_channels//8, 3, 1, 4, 4, activation=nn.ReLU())
+        self.branch4 = GatedConv(input_channels, output_channels//8, 3, 1, 5, 5, activation=nn.ReLU())
+        self.branch5 = GatedConv(input_channels, output_channels//8, 3, 1, 6, 6, activation=nn.ReLU())
+        self.branch6 = GatedConv(input_channels, output_channels//8, 3, 1, 8, 8, activation=nn.ReLU())
+        self.branch7 = GatedConv(input_channels, output_channels//8, 3, 1, 10, 10, activation=nn.ReLU())
+        self.branch8 = GatedConv(input_channels, output_channels//8, 3, 1, 1, 1, activation=nn.ReLU())
 
-        self.concatenation = GatedConv(input_channels, input_channels//8, 3, 1, 1, 1, activation=None)
+        self.concatenation = GatedConv(input_channels, output_channels, 3, 1, 1, 1, activation=None)
 
     def forward(self, x):
         b1 = self.branch1(x)
