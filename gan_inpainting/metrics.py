@@ -59,6 +59,7 @@ class TrainingMetrics:
             axs[0].plot(x_axis, self.lossG, x_axis, self.lossR)
             axs[0].set_xlabel('iterations')
             axs[0].set_ylabel('loss')
+            axs[0].legend(["Generator", "Discriminator"])
             # loss d
             axs[1].plot(x_axis, self.lossD)
             axs[1].set_xlabel('iterations')
