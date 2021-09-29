@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 import numpy as np
 
-from sklearn.metric import 
+from sklearn.metric import average_precision_score
 
 class TrainingMetrics:
 
@@ -13,7 +13,6 @@ class TrainingMetrics:
         self.lossR = []
         self.accuracy = []
         self.difference = []
-        self.max_distance = None
         self.dataloader = dataloader
         self.img, self.mask = next(iter(dataloader))
 
@@ -90,5 +89,7 @@ class TrainingMetrics:
 
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
+
+
 
 
