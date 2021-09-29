@@ -98,6 +98,7 @@ class TrainingMetrics:
         y_true = np.ones(pos.shape[0])
         y_true = np.concatenate((y_true, np.zeros(neg.shape[0])), axis = 0)
         y_score = torch.cat([pos,neg],dim=0)
+        y_score = y_score.detach().numpy()
         result = average_precision_score(y_true,y_score)
         return result
 
