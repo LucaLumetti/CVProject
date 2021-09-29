@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 import numpy as np
 
-from sklearn.metric import average_precision_score
+from sklearn.metrics import average_precision_score
 
 class TrainingMetrics:
 
@@ -96,7 +96,7 @@ class TrainingMetrics:
 
     def _average_precision(self, pos, neg):
         y_true = np.ones(pos.shape[0])
-        y_true.append(np.zeros(neg.shape[0]))
+        y_true = np.concatenate((y_true, np.zeros(neg.shape[0])), axis = 0)
         y_score = torch.cat([pos,neg],dim=0)
         result = average_precision_score(y_true,y_score)
         return result
