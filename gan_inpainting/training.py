@@ -22,7 +22,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
 # also a logger would be nice
-def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
+def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloader):
     netG.train()
     netD.train()
 
@@ -30,6 +30,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             'g': [],
             'd': [],
             'r': [],
+            'tv': []
             }
 
     accuracies = {
@@ -95,9 +96,12 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
             pred_neg_imgs = netD(reconstructed_imgs, masks)
             loss_generator = lossG(pred_neg_imgs)
             loss_recon = lossRecon(imgs, coarse_out, refined_out, dmasks)
-            loss_gen_recon = loss_generator + loss_recon
+            loss_tv = lossTV(refined_out)
+            loss_gen_recon = loss_generator + loss_recon + loss_tv
+
             losses['g'].append(loss_generator.item())
             losses['r'].append(loss_recon.item())
+            losses['tv'].append(loss_tv.item())
 
             loss_gen_recon.backward()
 
@@ -109,6 +113,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
                         f"loss_g: {losses['g'][-1]}, " + \
                         f"loss_d: {losses['d'][-1]}, " + \
                         f"loss_r: {losses['r'][-1]}, " + \
+                        f"loss_tv: {losses['tv'][-1]}, " + \
                         f"accuracy_d: {accuracies['d'][-1]}")
                 checkpoint_recon = ((reconstructed_imgs[0]+1)*127.5)
                 checkpoint_img = ((imgs[0]+1)*127.5)
@@ -133,7 +138,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
                 plt.close(fig)
 
                 save_image(checkpoint_recon/255, f'plots/recon_{i}_{ep}.png')
-                save_image(checkpoint_img/255, 'plots/orig.png')
+                save_image(checkpoint_img/255, 'plots/orig_{i}.png')
     return
 
 if __name__ == '__main__':
@@ -158,10 +163,11 @@ if __name__ == '__main__':
             )
 
     lossG = GeneratorLoss()
-    lossRecon = L1ReconLoss() # in the original paper, all alphas == 1
+    lossRecon = L1ReconLoss()
+    lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
 
-    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader)
+    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloader)
 
     torch.save(netG.state_dict(), 'models/generator.pt')
     torch.save(netD.state_dict(), 'models/discriminator.pt')
