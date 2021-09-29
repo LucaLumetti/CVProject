@@ -170,6 +170,11 @@ if __name__ == '__main__':
     lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
 
+    params_g = sum([ p.numel() for p in netG.parameters() ])
+    params_d = sum([ p.numel() for p in netD.parameters() ])
+
+    print(f'Generator: {params_g} params\n' + \
+          f'Discriminator: {params_d} params')
     train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloader)
 
     torch.save(netG.state_dict(), 'models/generator.pt')
