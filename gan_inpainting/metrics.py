@@ -12,7 +12,7 @@ class TrainingMetrics:
         self.lossD = []
         self.lossR = []
         self.accuracy = []
-        self.difference = []
+        self.average = []
         self.dataloader = dataloader
         self.img, self.mask = next(iter(dataloader))
 
@@ -35,6 +35,9 @@ class TrainingMetrics:
         # with torch.inference_mode():
         mean_pos_pred = pred_pos_imgs.mean(dim=1)
         mean_neg_pred = pred_neg_imgs.mean(dim=1)
+
+        self.average.append(self._average_precision(mean_pos_pred,mean_neg_pred))
+
         mean_pos_pred[mean_pos_pred > 0.5] = 1
         mean_pos_pred[mean_pos_pred <= 0.5] = 0
 
@@ -91,5 +94,10 @@ class TrainingMetrics:
             save_image(checkpoint_img / 255, 'plots/orig.png')
 
 
-
+    def _average_precision(self, pos, neg):
+        y_true = np.ones(pos.shape[0])
+        y_true.append(np.zeros(neg.shape[0]))
+        y_score = torch.cat([pos,neg],dim=0)
+        result = average_precision_score(y_true,y_score)
+        return result
 
