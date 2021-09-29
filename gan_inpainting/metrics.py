@@ -57,7 +57,7 @@ class TrainingMetrics:
                   f"loss_r: {self.lossR[-1]}, " + \
                   f"accuracy_d: {accuracy[-1]}")
 
-            fig, axs = plt.subplots(3, 1)
+            fig, axs = plt.subplots(4, 1)
             x_axis = range(len(self.lossG))
             # loss g
             axs[0].plot(x_axis, self.lossG, x_axis, self.lossR)
@@ -73,6 +73,12 @@ class TrainingMetrics:
             axs[2].set_xlabel('iterations')
             axs[2].set_ylabel('accuracy')
             axs[2].set_ylim(0, 1)
+
+            # average precision score
+            axs[3].plot(x_axis, self.average)
+            axs[3].set_xlabel('iterations')
+            axs[3].set_ylabel('average precision score')
+            axs[3].set_ylim(0, 1)
 
             fig.tight_layout()
             fig.savefig('plots/loss.png', dpi=fig.dpi)
