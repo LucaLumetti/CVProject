@@ -53,7 +53,7 @@ class TrainingMetrics:
                   f"loss_r: {self.lossR[-1]}, " + \
                   f"accuracy_d: {accuracy[-1]}")
 
-            fig, axs = plt.subplots(4, 1)
+            fig, axs = plt.subplots(3, 1)
             x_axis = range(len(self.lossG))
             # loss g
             axs[0].plot(x_axis, self.lossG, x_axis, self.lossR)
@@ -82,6 +82,7 @@ class TrainingMetrics:
             reconstructed_imgs = refined_out * self.mask + imgs * (1 - self.mask)
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
+            '''
             #calculate MSE
             self.difference.append(self._mse(checkpoint_img,checkpoint_recon))
             #plot MSE
@@ -89,6 +90,7 @@ class TrainingMetrics:
             axs[3].plot(i, self.difference)
             axs[3].set_xlabel('checkpoint')
             axs[3].set_ylabel('MSE')
+            '''
 
             fig.tight_layout()
             fig.savefig('plots/loss.png', dpi=fig.dpi)
@@ -97,8 +99,9 @@ class TrainingMetrics:
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
 
+    '''
     def _mse(self, img1, img2):
         err = np.sum((img1.astype(float)-img2.astype(float))**2)
         err /= float(img1.shape[0]*img1.shape[1])
         return err
-
+    '''
