@@ -55,6 +55,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
 
             # forward G
             coarse_out, refined_out = netG(imgs, masks)
+            reconstructed_coarses = coarse_out*masks + imgs*(1-masks)
             reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
             # pos_imgs = torch.cat([imgs, masks], dim=1)
@@ -115,6 +116,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
                         f"loss_r: {losses['r'][-1]}, " + \
                         f"loss_tv: {losses['tv'][-1]}, " + \
                         f"accuracy_d: {accuracies['d'][-1]}")
+                checkpoint_coarse = ((reconstructed_coarses[0]+1)*127.5)
                 checkpoint_recon = ((reconstructed_imgs[0]+1)*127.5)
                 checkpoint_img = ((imgs[0]+1)*127.5)
 
@@ -137,6 +139,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
                 fig.savefig('plots/loss.png', dpi=fig.dpi)
                 plt.close(fig)
 
+                save_image(checkpoint_coarse/255, f'plots/coarse_{i}_{ep}.png')
                 save_image(checkpoint_recon/255, f'plots/recon_{i}_{ep}.png')
                 save_image(checkpoint_img/255, 'plots/orig_{i}.png')
     return
