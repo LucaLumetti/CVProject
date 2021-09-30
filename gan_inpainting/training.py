@@ -141,7 +141,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
 
                 save_image(checkpoint_coarse/255, f'plots/coarse_{i}_{ep}.png')
                 save_image(checkpoint_recon/255, f'plots/recon_{i}_{ep}.png')
-                save_image(checkpoint_img/255, 'plots/orig_{i}.png')
+                save_image(checkpoint_img/255, f'plots/orig_{i}.png')
     return
 
 if __name__ == '__main__':
@@ -155,14 +155,14 @@ if __name__ == '__main__':
     netD = Discriminator(input_size=config.input_size).to(device)
 
     optimG = torch.optim.Adam(
-            netG.parameters(),
-            lr=config.learning_rate,
-            betas=(0.5, 0.999)
+                netG.parameters(),
+                lr=config.learning_rate,
+                betas=(0.5, 0.999)
             )
     optimD = torch.optim.Adam(
-            netD.parameters(),
-            lr=config.learning_rate,
-            betas=(0.5, 0.999)
+                netD.parameters(),
+                lr=config.learning_rate,
+                betas=(0.5, 0.999)
             )
 
     lossG = GeneratorLoss()
