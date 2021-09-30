@@ -11,6 +11,7 @@ class TrainingMetrics:
         self.accuracy = []
         self.dataloader = dataloader
         self.img, self.mask = next(iter(dataloader))
+        self.iter = 0
 
     '''
         Parameters:
@@ -23,6 +24,7 @@ class TrainingMetrics:
 
         if losses is None or len(losses.keys()) < 2:
             raise Exception("losses must be at least two")
+        self.iter += 1
 
         if self.losses is None:
             self.losses = losses
@@ -48,8 +50,8 @@ class TrainingMetrics:
         self.accuracy.append(accuracyD)
 
         # every 100 img, print losses, update the graph, output an image as example
-        if len(self.losses.values()[0]) % 100 == 0:
-            print(f"[{len(self.losses.values()[0]) / 100}]\t" + \
+        if self.iter % 100 == 0:
+            print(f"[{self.iter / 100}]\t" + \
                   f"accuracy_d: {accuracy[-1]},")
 
             fig, axs = plt.subplots(len(self.losses.items()), 1)
@@ -57,7 +59,8 @@ class TrainingMetrics:
             for i,(name,value) in enumerate(self.losses):
                 print(f"{name}: {value[-1]},")
 
-                x_axis = range(len(self.losses.values()[0]))
+
+                x_axis = range(self.iter)
                 # loss g
                 axs[i].plot(x_axis, value)
                 axs[i].set_xlabel('iterations')
