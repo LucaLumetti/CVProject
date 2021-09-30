@@ -7,27 +7,28 @@ from skimage.metrics import structural_similarity as ssim
 class TrainingMetrics:
 
     def __init__(self, dataloader):
-        self.lossG = []
-        self.lossD = []
-        self.lossR = []
+        self.losses = None
         self.accuracy = []
-        self.average = []
         self.dataloader = dataloader
         self.img, self.mask = next(iter(dataloader))
 
     '''
         Parameters:
-            lossG: loss for Generator
-            lossD: loss for Discriminator
-            lossR: loss for Refined
+            losses: dict with {name: value} name is useful for the graph's legend
             D_result: result of Discriminator for accuracy
             netG: Generator Net for testing
             netD: Discriminator Net for testing
     '''
-    def update(self, lossG, lossD, lossR, D_result, netG, netD):
-        self.lossG.append(lossG)
-        self.lossD.append(lossD)
-        self.lossR.append(lossR)
+    def update(self, losses: dict , D_result, netG, netD):
+
+        if losses is None or len(losses.keys()) < 2:
+            raise Exception("losses must be at least two")
+
+        if self.losses is None:
+            self.losses = losses
+        else:
+            for (name, value) in losses.items():
+                self.losses[name].append(value)
 
         pred_pos_imgs, pred_neg_imgs = torch.chunk(D_result, 2, dim=0)
 
@@ -47,29 +48,20 @@ class TrainingMetrics:
         self.accuracy.append(accuracyD)
 
         # every 100 img, print losses, update the graph, output an image as example
-        if len(self.lossG) % 100 == 0:
-            print(f"[{i}]\t" + \
-                  f"loss_g: {self.lossG[-1]}, " + \
-                  f"loss_d: {self.lossD[-1]}, " + \
-                  f"loss_r: {self.lossR[-1]}, " + \
-                  f"accuracy_d: {accuracy[-1]}")
+        if len(self.losses.values()[0]) % 100 == 0:
+            print(f"[{len(self.losses.values()[0]) / 100}]\t" + \
+                  f"accuracy_d: {accuracy[-1]},")
 
-            fig, axs = plt.subplots(4, 1)
-            x_axis = range(len(self.lossG))
-            # loss g
-            axs[0].plot(x_axis, self.lossG, x_axis, self.lossR)
-            axs[0].set_xlabel('iterations')
-            axs[0].set_ylabel('loss')
-            axs[0].legend(["Generator", "Refined"])
-            # loss d
-            axs[1].plot(x_axis, self.lossD)
-            axs[1].set_xlabel('iterations')
-            axs[1].set_ylabel('loss')
-            # acc d
-            axs[2].plot(x_axis, accuracies['d'])
-            axs[2].set_xlabel('iterations')
-            axs[2].set_ylabel('accuracy')
-            axs[2].set_ylim(0, 1)
+            fig, axs = plt.subplots(len(self.losses.items()), 1)
+
+            for i,(name,value) in enumerate(self.losses):
+                print(f"{name}: {value[-1]},")
+
+                x_axis = range(len(self.losses.values()[0]))
+                # loss g
+                axs[i].plot(x_axis, value)
+                axs[i].set_xlabel('iterations')
+                axs[i].set_ylabel(name)
 
             fig.tight_layout()
             fig.savefig('plots/loss.png', dpi=fig.dpi)
