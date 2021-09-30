@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 import numpy as np
 
-from sklearn.metrics import average_precision_score
-
 class TrainingMetrics:
 
     def __init__(self, dataloader):
@@ -35,8 +33,6 @@ class TrainingMetrics:
         # with torch.inference_mode():
         mean_pos_pred = pred_pos_imgs.mean(dim=1)
         mean_neg_pred = pred_neg_imgs.mean(dim=1)
-
-        self.average.append(self._average_precision(mean_pos_pred,mean_neg_pred))
 
         mean_pos_pred[mean_pos_pred > 0.5] = 1
         mean_pos_pred[mean_pos_pred <= 0.5] = 0
@@ -74,12 +70,6 @@ class TrainingMetrics:
             axs[2].set_ylabel('accuracy')
             axs[2].set_ylim(0, 1)
 
-            # average precision score
-            axs[3].plot(x_axis, self.average)
-            axs[3].set_xlabel('iterations')
-            axs[3].set_ylabel('average precision score')
-            axs[3].set_ylim(0, 1)
-
             fig.tight_layout()
             fig.savefig('plots/loss.png', dpi=fig.dpi)
             plt.close(fig)
@@ -98,13 +88,3 @@ class TrainingMetrics:
 
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
-
-
-    def _average_precision(self, pos, neg):
-        y_true = np.ones(pos.shape[0])
-        y_true = np.concatenate((y_true, np.zeros(neg.shape[0])), axis = 0)
-        y_score = torch.cat([pos,neg],dim=0)
-        y_score = y_score.detach().numpy()
-        result = average_precision_score(y_true,y_score)
-        return result
-
