@@ -59,7 +59,7 @@ class TrainingMetrics:
             axs[0].plot(x_axis, self.lossG, x_axis, self.lossR)
             axs[0].set_xlabel('iterations')
             axs[0].set_ylabel('loss')
-            axs[0].legend(["Generator", "Discriminator"])
+            axs[0].legend(["Generator", "Refined"])
             # loss d
             axs[1].plot(x_axis, self.lossD)
             axs[1].set_xlabel('iterations')
@@ -88,3 +88,11 @@ class TrainingMetrics:
 
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
+
+    def PSNR(self, original, generate):
+        mse = np.mean((original - contrast) ** 2)
+        if mse == 0:
+            return 100
+        PIXEL_MAX = 255.0
+        psnr = 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
+        return psnr
