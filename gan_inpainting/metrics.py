@@ -2,6 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 import numpy as np
+from skimage.metrics import structural_similarity as ssim
 
 class TrainingMetrics:
 
@@ -86,6 +87,8 @@ class TrainingMetrics:
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
 
+            similarity = ssim(self.img, checkpoint_img, data_range= self.img.max() - self.img.min())
+
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
 
@@ -96,3 +99,5 @@ class TrainingMetrics:
         PIXEL_MAX = 255.0
         psnr = 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
         return psnr
+
+
