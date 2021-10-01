@@ -3,6 +3,7 @@ import cv2
 
 import torch
 import torchvision
+import argparse
 from torchvision import transforms as T
 from torchvision.utils import save_image
 import torch.nn.functional as F
@@ -18,6 +19,15 @@ from config import Config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+
+def save_checkpoint(state,is_best,filename='/output/checkpoint.pth.tar'):
+    """Save checkpoint if a new best is achieved"""
+    if is_best:
+        print("=> Saving a new best")
+        torch.save(state,filename)
+    else:
+        print("=> Validation Accuracy did not improve")
+        
 # torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
@@ -139,6 +149,14 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, dataloader):
 if __name__ == '__main__':
     config = Config('config.json')
     print(config)
+
+    parser = argparse.ArgumentParser(description = 'Start a training session of a GAN')
+    parser.add_argument('-g', metavar='G', type=Generator, help='pretrained model of generator')
+    parser.add_argument('-d',metavar='D', type=Discriminator, help='pretrained model of discriminator')
+    parser.add_argument('--dataset', metavar='Dataset',type=FaceMaskDataset,help='Dataset to use')
+
+    #TODO: complete argparser
+
     dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(256))
     # dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
