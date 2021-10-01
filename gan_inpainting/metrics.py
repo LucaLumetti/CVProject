@@ -97,7 +97,11 @@ def SSIM(original, generate):
 
 '''
     Calculate the PSNR 
-    Parameter
+    Params:
+    --original      : orignal image
+    --generate      : generator output
+    return:
+    --score         : a bigger psnr indicates better images
 '''
 def PSNR(self, original, generate):
     mse = np.mean((original - generate) ** 2)
@@ -118,7 +122,7 @@ def PSNR(self, original, generate):
     --num_worker    : num_worker fro operations
     
     return:
-    --fid_score     : 
+    --fid_score     : a lower score indicates better-quality images
 '''
 
 def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_worker= 8):
