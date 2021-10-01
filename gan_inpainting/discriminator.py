@@ -17,12 +17,12 @@ class Discriminator(nn.Module):
         self.cnum = cnum
         self.size = input_size
         self.discriminator_net = nn.Sequential(
-                SpectralNormConv(input_channels, 2*self.cnum, 4, 2, padding=get_pad(self.size, 5, 2)),
-                SpectralNormConv(2*self.cnum, 4*self.cnum, 4, 2, padding=get_pad(self.size//2, 4, 2)),
-                SpectralNormConv(4*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(self.size//4, 4, 2)),
-                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(self.size//8, 4, 2)),
-                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(self.size//16, 4, 2)),
-                SpectralNormConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(self.size//32, 4, 2)),
+                SpectralNormConv(input_channels, 2*self.cnum, 5, 2, padding=get_pad(self.size, 6, 2)),
+                SpectralNormConv(2*self.cnum, 4*self.cnum, 5, 2, padding=get_pad(self.size//2, 6, 2)),
+                SpectralNormConv(4*self.cnum, 8*self.cnum, 5, 2, padding=get_pad(self.size//4, 6, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 5, 2, padding=get_pad(self.size//8, 6, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 5, 2, padding=get_pad(self.size//16, 6, 2)),
+                SpectralNormConv(8*self.cnum, 8*self.cnum, 5, 2, padding=get_pad(self.size//32, 6, 2)),
                 # not clear if usefull
                 # SelfAttention(8*self.cnum, 'relu'),
                 # GatedConv(8*self.cnum, 8*self.cnum, 4, 2, padding=get_pad(4, 5, 2)),

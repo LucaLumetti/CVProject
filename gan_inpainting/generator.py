@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from layers import GatedConv, GatedDeConv, SelfAttention
+from layers import *
 from init_weights import init_weights
 
 def get_pad(in_,  ksize, stride, atrous=1):
@@ -34,10 +34,14 @@ class Generator(nn.Module):
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 # atrous
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(self.size//4, 3, 1, 2)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(self.size//4, 3, 1, 4)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(self.size//4, 3, 1, 8)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(self.size//4, 3, 1, 16)),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                # GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(self.size//4, 3, 1, 2)),
+                # GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(self.size//4, 3, 1, 4)),
+                # GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(self.size//4, 3, 1, 8)),
+                # GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=16, padding=get_pad(self.size//4, 3, 1, 16)),
                 # conv
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
@@ -72,11 +76,13 @@ class Generator(nn.Module):
                 # downsampling
                 GatedConv(2*self.cnum, 2*self.cnum, 4, 2, padding=get_pad(self.size//2, 4, 2)),
                 GatedConv(2*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1), activation=nn.ReLU()),
+                # GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1), activation=nn.ReLU()),
+                MultiDilationResnetBlock4(4*self.cnum, 4*self.cnum),
                 # self attention
                 SelfAttention(4*self.cnum, 'relu', with_attn=False),
                 # conv
-                GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
+                # GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
+                MultiDilationResnetBlock4(4*self.cnum, 4*self.cnum),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1, 1)),
                 )
         self.refine_all_net = nn.Sequential(

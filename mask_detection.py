@@ -34,7 +34,7 @@ def resize_with_ratio(img, width=None, height=None, inter=cv2.INTER_AREA):
 # keypoint detection
 def find_facial_landmarks(img, landmarks=[], debug=False):
 
-    with open('landmarks_list.txt', 'r') as f:
+    with open('/homes/mdibartolomeo/CVProject/landmarks_list.txt', 'r') as f:
         landmarks_list = [int(i) for i in f.readline().strip().split(',')]
 
     keypoints = []
