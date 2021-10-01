@@ -1,5 +1,7 @@
 import sys
 
+sys.path.append('/homes/mdibartolomeo/CVProject/')
+
 import torch
 import cv2
 from config import Config
@@ -12,7 +14,7 @@ from pathlib import Path
 from script_dataset import create_mask
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+print(device)
 def test(netG, netD, lossG, lossD, dataloader):
     netG.eval()
     netD.eval()
@@ -26,9 +28,9 @@ def test(netG, netD, lossG, lossD, dataloader):
     accuracies = {
         'd': []
     }
-
+    print('sonoqui')
     for i,(imgs,masks) in enumerate(dataloader):
-
+        print('sono qui')
         imgs = imgs.to(device)
         masks = masks.to(device)
 
@@ -73,7 +75,7 @@ def test(netG, netD, lossG, lossD, dataloader):
 
             output = (reconstructed_imgs + 1) * 127.5
             output = torch.flip(output,[-1])
-
+        print('save file in '+config.test_dir+'/output/'+filename)
         cv2.imwrite(config.test_dir+'/output/'+filename,output)
     return
 
@@ -87,7 +89,7 @@ if __name__ == '__main__':
     path_to_mask = Path(f'{pathname.parent.parent.parent}' + \
                         f'/masked_images/{subfolder}/{filename}')
     path_to_mask.parent.mkdir(parents=True, exist_ok=True)
-
+    print(path_to_mask)
     if path_to_mask.exists():
         exit(0)
 
@@ -111,7 +113,6 @@ if __name__ == '__main__':
         lossG = GeneratorLoss()
         lossRecon = L1ReconLoss()
         lossD = DiscriminatorLoss()
-
         test(netG, netD, lossG, lossD, dataloader)
 
     else:
