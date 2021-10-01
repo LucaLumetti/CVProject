@@ -25,7 +25,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
 # also a logger would be nice
-def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloader):
+def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader):
     netG.train()
     netD.train()
 
@@ -33,7 +33,9 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             'g': [],
             'd': [],
             'r': [],
-            'tv': []
+            'tv': [],
+            'perc': [],
+            'style': [],
             }
 
     accuracies = {
@@ -48,6 +50,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             optimD.zero_grad()
             lossG.zero_grad()
             lossD.zero_grad()
+            lossTV.zero_grad()
+            lossVGG.zero_grad()
 
             imgs = imgs.to(device)
             masks = masks.to(device)
@@ -101,11 +105,14 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             loss_generator = lossG(pred_neg_imgs)
             loss_recon = lossRecon(imgs, coarse_out, refined_out, dmasks)
             loss_tv = lossTV(refined_out)
-            loss_gen_recon = loss_generator + loss_recon + loss_tv
+            loss_perc, loss_style = lossVGG(imgs, refined_out)
+            loss_gen_recon = loss_generator + loss_recon + loss_tv + loss_perc + loss_style
 
             losses['g'].append(loss_generator.item())
             losses['r'].append(loss_recon.item())
             losses['tv'].append(loss_tv.item())
+            losses['perc'].append(loss_perc.item())
+            losses['style'].append(loss_style.item())
 
             loss_gen_recon.backward()
 
@@ -197,13 +204,14 @@ if __name__ == '__main__':
     lossRecon = L1ReconLoss()
     lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
+    lossVGG = VGGLoss()
 
     params_g = sum([ p.numel() for p in netG.parameters() ])
     params_d = sum([ p.numel() for p in netD.parameters() ])
 
     print(f'Generator: {params_g} params\n' + \
           f'Discriminator: {params_d} params')
-    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloader)
+    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader)
 
     torch.save(netG.state_dict(), 'models/generator.pt')
     torch.save(netD.state_dict(), 'models/discriminator.pt')
