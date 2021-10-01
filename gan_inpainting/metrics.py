@@ -151,6 +151,15 @@ def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_worker
     print('FID: ', fid_value)
     return fid_value
 
+
+'''
+    calculate Perceptual similarity (LPIPS)
+    Params:
+    --original      : tansor with original image, size (N,3,H,W)
+    --generated     : tensot with generated image, size (N,3,H,W)
+    return:
+    --result        : average between N LPIPS
+'''
 def LPIPS(original, generated):
     # change img range from [0,255] to [-1,+1]
     original = original / 127.5 - 1
