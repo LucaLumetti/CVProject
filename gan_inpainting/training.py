@@ -154,9 +154,14 @@ if __name__ == '__main__':
     parser.add_argument("--config", type=str, help="config file", required=True)
     parser.add_argument("--checkpoint-gen", type=str, help="path to generator.pt")
     parser.add_argument("--checkpoint-dis", type=str, help="path to discriminator.pt")
+    parser.add_argument("--debug", help="debug logging level")
     args = parser.parse_args()
 
-    logging.basicConfig(filename='output.log', encoding='utf-8', level=logging.DEBUG)
+    logging_level = logging.INFO
+    if args.debug:
+        logging_level = logging.DEBUG
+
+    logging.basicConfig(filename='output.log', encoding='utf-8', level=logging_level)
 
     config = Config(args.config)
     logging.debug(config)
