@@ -110,7 +110,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             optimG.step()
             # every 500 img, print losses, update the graph, output an image as
             # example
-            if i % 500 == 0:
+            if i % 1 == 0:
                 print(f"[{i}]\t" + \
                         f"loss_g: {losses['g'][-1]}, " + \
                         f"loss_d: {losses['d'][-1]}, " + \
@@ -121,40 +121,57 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
                 checkpoint_recon = ((reconstructed_imgs[0]+1)*127.5)
                 checkpoint_img = ((imgs[0]+1)*127.5)
 
-                fig, axs = plt.subplots(3, 1)
-                x_axis = range(len(losses['g']))
-                # loss g
-                axs[0].plot(x_axis, losses['g'], x_axis, losses['r'], x_axis, losses['tv'])
-                axs[0].set_xlabel('iterations')
-                axs[0].set_ylabel('loss')
-                # loss d
-                axs[1].plot(x_axis, losses['d'])
-                axs[1].set_xlabel('iterations')
-                axs[1].set_ylabel('loss')
-                # acc d
-                axs[2].plot(x_axis, accuracies['d'])
-                axs[2].set_xlabel('iterations')
-                axs[2].set_ylabel('accuracy')
-                axs[2].set_ylim(0,1)
-                fig.tight_layout()
-                fig.savefig('plots/loss.png', dpi=fig.dpi)
-                plt.close(fig)
+                # fig, axs = plt.subplots(3, 1)
+                # x_axis = range(len(losses['g']))
+                # # loss g
+                # axs[0].plot(x_axis, losses['g'], x_axis, losses['r'], x_axis, losses['tv'])
+                # axs[0].set_xlabel('iterations')
+                # axs[0].set_ylabel('loss')
+                # # loss d
+                # axs[1].plot(x_axis, losses['d'])
+                # axs[1].set_xlabel('iterations')
+                # axs[1].set_ylabel('loss')
+                # # acc d
+                # axs[2].plot(x_axis, accuracies['d'])
+                # axs[2].set_xlabel('iterations')
+                # axs[2].set_ylabel('accuracy')
+                # axs[2].set_ylim(0,1)
+                # fig.tight_layout()
+                # fig.savefig('plots/loss.png', dpi=fig.dpi)
+                # plt.close(fig)
 
                 save_image(checkpoint_coarse/255, f'plots/coarse_{i}_{ep}.png')
                 save_image(checkpoint_recon/255, f'plots/recon_{i}_{ep}.png')
                 save_image(checkpoint_img/255, f'plots/orig_{i}.png')
+                torch.save(netG.state_dict(), 'models/generator.pt')
+                torch.save(netD.state_dict(), 'models/discriminator.pt')
     return
 
 if __name__ == '__main__':
-    config = Config('config.json')
+    parser = argparse.ArgumentParser(description="Training")
+    parser.add_argument("--config", type=str, help="config file")
+    parser.add_argument("--checkpoint-gen", type=str, help="path to generator.pt")
+    parser.add_argument("--checkpoint-dis", type=str, help="path to discriminator.pt")
+    args = parser.parse_args()
+
+
+
+    config = Config(args.config)
     print(config)
 
     dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
-    # dataset = FakeDataset()
     dataloader = dataset.loader(batch_size=config.batch_size)
 
     netG = Generator(input_size=config.input_size).to(device)
     netD = Discriminator(input_size=config.input_size).to(device)
+
+    if args.checkpoint_gen is not None:
+        checkpointG = torch.load(args.checkpoint_gen)
+        netG.load_state_dict(checkpointG)
+
+    if args.checkpoint_dis is not None:
+        checkpointD = torch.load(args.checkpoint_dis)
+        netD.load_state_dict(checkpointD)
 
     optimG = torch.optim.Adam(
                 netG.parameters(),
