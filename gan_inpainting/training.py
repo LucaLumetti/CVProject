@@ -10,7 +10,7 @@ import torch.nn as nn
 
 import matplotlib.pyplot as plt
 
-from generator import Generator
+from generator import *
 from discriminator import Discriminator
 from loss import *
 from dataset import FakeDataset, FaceMaskDataset
@@ -156,12 +156,12 @@ if __name__ == '__main__':
 
     optimG = torch.optim.Adam(
                 netG.parameters(),
-                lr=config.learning_rate,
+                lr=config.learning_rate_g,
                 betas=(0.5, 0.999)
             )
     optimD = torch.optim.Adam(
                 netD.parameters(),
-                lr=config.learning_rate,
+                lr=config.learning_rate_d,
                 betas=(0.5, 0.999)
             )
 
