@@ -4,6 +4,8 @@ from torchvision.utils import save_image
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
 
+from pytorch_fid import calculate_fid_given_paths
+
 class TrainingMetrics:
 
     def __init__(self, dataloader):
@@ -95,4 +97,29 @@ class TrainingMetrics:
         psnr = 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
         return psnr
 
+'''
+    Calculate FID from original's dataset and generate's dataset
+    Params:
+    --data_orig     : path of the dataset with the original images
+    --data_gen      : path with the dataset with the generate images
+    --batch_size    : batch_size for dataloader
+    --device        : it can be like cuda:0 or cpu, it's better if there is a GPU
+    --dims          : we can use different layer of the inception network, default is 2048 like paper
+    --num_worker    : num_worker fro operations
+'''
 
+def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_worker= 8):
+    if device is None:
+        dev = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
+    else:
+        dev = torch.device(device)
+
+    paths = [data_orig,data_gen]
+
+    fid_value = calculate_fid_given_paths(paths,
+                                          batch_size,
+                                          dev,
+                                          dims,
+                                          num_workers)
+    print('FID: ', fid_value)
+    return fid_value
