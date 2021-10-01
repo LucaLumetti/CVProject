@@ -178,18 +178,18 @@ if __name__ == '__main__':
     logging.debug(config)
 
     dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
-    dataloader = dataset.loader(batch_size=config.batch_size)
+    dataloader = dataset.loader(batch_size=config.batch_size, shuffle=True)
 
     netG = MSSAGenerator(input_size=config.input_size).to(device)
     netD = Discriminator(input_size=config.input_size).to(device)
 
     if args.checkpoint_gen is not None:
-        loggin.info('resuming training of generator')
+        logging.info('resuming training of generator')
         checkpointG = torch.load(args.checkpoint_gen)
         netG.load_state_dict(checkpointG)
 
     if args.checkpoint_dis is not None:
-        loggin.info('resuming training of discriminator')
+        logging.info('resuming training of discriminator')
         checkpointD = torch.load(args.checkpoint_dis)
         netD.load_state_dict(checkpointD)
 
