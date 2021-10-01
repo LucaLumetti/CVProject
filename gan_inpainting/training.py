@@ -121,24 +121,24 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
                 checkpoint_recon = ((reconstructed_imgs[0]+1)*127.5)
                 checkpoint_img = ((imgs[0]+1)*127.5)
 
-                # fig, axs = plt.subplots(3, 1)
-                # x_axis = range(len(losses['g']))
-                # # loss g
-                # axs[0].plot(x_axis, losses['g'], x_axis, losses['r'], x_axis, losses['tv'])
-                # axs[0].set_xlabel('iterations')
-                # axs[0].set_ylabel('loss')
-                # # loss d
-                # axs[1].plot(x_axis, losses['d'])
-                # axs[1].set_xlabel('iterations')
-                # axs[1].set_ylabel('loss')
-                # # acc d
-                # axs[2].plot(x_axis, accuracies['d'])
-                # axs[2].set_xlabel('iterations')
-                # axs[2].set_ylabel('accuracy')
-                # axs[2].set_ylim(0,1)
-                # fig.tight_layout()
-                # fig.savefig('plots/loss.png', dpi=fig.dpi)
-                # plt.close(fig)
+                fig, axs = plt.subplots(3, 1)
+                x_axis = range(len(losses['g']))
+                # loss g
+                axs[0].plot(x_axis, losses['g'], x_axis, losses['r'], x_axis, losses['tv'])
+                axs[0].set_xlabel('iterations')
+                axs[0].set_ylabel('loss')
+                # loss d
+                axs[1].plot(x_axis, losses['d'])
+                axs[1].set_xlabel('iterations')
+                axs[1].set_ylabel('loss')
+                # acc d
+                axs[2].plot(x_axis, accuracies['d'])
+                axs[2].set_xlabel('iterations')
+                axs[2].set_ylabel('accuracy')
+                axs[2].set_ylim(0,1)
+                fig.tight_layout()
+                fig.savefig('plots/loss.png', dpi=fig.dpi)
+                plt.close(fig)
 
                 save_image(checkpoint_coarse/255, f'plots/coarse_{i}_{ep}.png')
                 save_image(checkpoint_recon/255, f'plots/recon_{i}_{ep}.png')
