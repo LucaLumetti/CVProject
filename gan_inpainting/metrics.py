@@ -90,13 +90,21 @@ class TrainingMetrics:
             save_image(checkpoint_img / 255, 'plots/orig.png')
 
 
+'''
+    calculate the Structural SIMilarity (SSIM)
+    Params:
+    --original      : orignal image
+    --generate      : generator output
+    return:
+    --score         : a bigger score indicates better images 
+'''
 def SSIM(original, generate):
     similarity = ssim(original, generate, data_range=original.max() - original.min())
     return similarity
 
 
 '''
-    Calculate the PSNR 
+    Calculate the Peak Signal to Noise Ratio (PSNR) 
     Params:
     --original      : orignal image
     --generate      : generator output
@@ -112,7 +120,7 @@ def PSNR(self, original, generate):
     return psnr
 
 '''
-    Calculate FID from original's dataset and generate's dataset
+    Calculate Fréchet Inception Distance (FID) from original's dataset and generate's dataset
     Params:
     --data_orig     : path of the dataset with the original images
     --data_gen      : path with the dataset with the generate images
@@ -140,3 +148,5 @@ def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_worker
                                           num_workers)
     print('FID: ', fid_value)
     return fid_value
+
+
