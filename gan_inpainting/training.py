@@ -168,7 +168,7 @@ if __name__ == '__main__':
     if args.debug:
         logging_level = logging.DEBUG
 
-    logging.basicConfig(filename='output.log', encoding='utf-8', level=logging_level)
+    logging.basicConfig(filename='output.log', level=logging_level)
 
     config = Config(args.config)
     logging.debug(config)
@@ -176,7 +176,7 @@ if __name__ == '__main__':
     dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
     dataloader = dataset.loader(batch_size=config.batch_size)
 
-    netG = Generator(input_size=config.input_size).to(device)
+    netG = MSSAGenerator(input_size=config.input_size).to(device)
     netD = Discriminator(input_size=config.input_size).to(device)
 
     if args.checkpoint_gen is not None:
