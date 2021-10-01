@@ -6,6 +6,8 @@ from skimage.metrics import structural_similarity as ssim
 
 from pytorch_fid.fid_score import calculate_fid_given_paths
 
+import lpips
+
 class TrainingMetrics:
 
     def __init__(self, dataloader):
@@ -149,4 +151,13 @@ def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_worker
     print('FID: ', fid_value)
     return fid_value
 
+def LPIPS(original, generated):
+    # change img range from [0,255] to [-1,+1]
+    original = original / 127.5 - 1
+    generated = generated / 127.5 -1
 
+    loss_alex = lpips.LPIPS(net='alex')
+
+    result = loss_alex(original, generated)
+
+    return result.mean
