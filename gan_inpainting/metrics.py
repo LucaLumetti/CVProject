@@ -15,6 +15,9 @@ class TrainingMetrics:
         self.accuracy = []
         self.dataloader = dataloader
         self.img, self.mask = next(iter(dataloader))
+        self.ssim = []
+        self.psnr = []
+        self.lpips = []
         self.iter = 0
 
     '''
@@ -86,7 +89,7 @@ class TrainingMetrics:
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
 
-            similiraty = SSIM(self.img, checkpoint_img)
+
 
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
@@ -113,7 +116,7 @@ def SSIM(original, generate):
     return:
     --score         : a bigger psnr indicates better images
 '''
-def PSNR(self, original, generate):
+def PSNR(original, generate):
     mse = np.mean((original - generate) ** 2)
     if mse == 0:
         return 100
