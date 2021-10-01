@@ -1,9 +1,11 @@
+import argparse
+import logging
+
 import numpy as np
 import cv2
 
 import torch
 import torchvision
-import argparse
 from torchvision import transforms as T
 from torchvision.utils import save_image
 import torch.nn.functional as F
@@ -110,8 +112,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             optimG.step()
             # every 500 img, print losses, update the graph, output an image as
             # example
-            if i % 1 == 0:
-                print(f"[{i}]\t" + \
+            if i % 100 == 0:
+                logging.info(f"[{i}]\t" + \
                         f"loss_g: {losses['g'][-1]}, " + \
                         f"loss_d: {losses['d'][-1]}, " + \
                         f"loss_r: {losses['r'][-1]}, " + \
@@ -149,15 +151,15 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Training")
-    parser.add_argument("--config", type=str, help="config file")
+    parser.add_argument("--config", type=str, help="config file", required=True)
     parser.add_argument("--checkpoint-gen", type=str, help="path to generator.pt")
     parser.add_argument("--checkpoint-dis", type=str, help="path to discriminator.pt")
     args = parser.parse_args()
 
-
+    logging.basicConfig(filename='output.log', encoding='utf-8', level=logging.DEBUG)
 
     config = Config(args.config)
-    print(config)
+    logging.debug(config)
 
     dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
     dataloader = dataset.loader(batch_size=config.batch_size)
@@ -166,10 +168,12 @@ if __name__ == '__main__':
     netD = Discriminator(input_size=config.input_size).to(device)
 
     if args.checkpoint_gen is not None:
+        loggin.info('resuming training of generator')
         checkpointG = torch.load(args.checkpoint_gen)
         netG.load_state_dict(checkpointG)
 
     if args.checkpoint_dis is not None:
+        loggin.info('resuming training of discriminator')
         checkpointD = torch.load(args.checkpoint_dis)
         netD.load_state_dict(checkpointD)
 
