@@ -61,6 +61,8 @@ class TrainingMetrics:
             print(f"[{self.iter / 100}]\t" + \
                   f"accuracy_d: {accuracy[-1]},")
 
+            count = self.iter / 100
+
             fig, axs = plt.subplots(len(self.losses.items()), 1)
             x_axis = range(self.iter)
 
@@ -73,7 +75,7 @@ class TrainingMetrics:
                 axs[i].set_ylabel(name)
 
             fig.tight_layout()
-            fig.savefig('plots/loss.png', dpi=fig.dpi)
+            fig.savefig(f'plots/loss_{count}.png', dpi=fig.dpi)
             plt.close(fig)
 
             #using CPU
@@ -114,11 +116,11 @@ class TrainingMetrics:
             axs[0].title.set_text("PSNR")
 
             fig.tight_layout()
-            fig.savefig('plots/quality_metrics.png', dpi=fig.dpi)
+            fig.savefig(f'plots/quality_metrics{count}.png', dpi=fig.dpi)
             plt.close(fig)
 
-            save_image(checkpoint_recon / 255, 'plots/recon.png')
-            save_image(checkpoint_img / 255, 'plots/orig.png')
+            save_image(checkpoint_recon / 255, f'plots/recon{count}.png')
+            save_image(checkpoint_img / 255, f'plots/orig{count}.png')
 
 
 '''
