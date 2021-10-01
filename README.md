@@ -24,3 +24,16 @@ The pipeline will be structured as follows:
 - Detect the mask in the first image by using classical image-processing operators, like edge detection and/or segmentation algorithms.
 - Fix face orientation in the reference image by using a geometric-based algorithm, like the thin-plate spline transformation.
 - Reconstruct the missing parts of the face in the first image by using a GAN network with a contrastive learning approach. (Deep learning network with a retrieval component)
+
+## TODO
+- [x] Weights should be initialized with Xavier (or similar)
+- [ ] Test the script to test the network (testing.py)
+- [ ] Metrics analysis in training.py could be rewritten in a separated class
+- [ ] It would be cool to test the network on the same image while training, in
+  order to compare the GAN at different epochs
+- [x] Self attention layer generate CUDA out of memory
+- [x] Low number of channels in generator and discriminator always bc of CUDA out of
+  memory
+- [x] Give the possibility to resume a training using the saved model as
+- [x] Give the option to transform images to 512x512 and 256x256 before training
+  starting point

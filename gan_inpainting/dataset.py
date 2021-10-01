@@ -25,10 +25,11 @@ class FakeDataset(Dataset):
         return DataLoader(self, **args)
 
 class FaceMaskDataset(Dataset):
-    def __init__(self, dataset_dir, csv_file):
+    def __init__(self, dataset_dir, csv_file, transf=None):
         self.dataset_dir = dataset_dir
         self.images = pd.read_csv(f'{dataset_dir}/{csv_file}', dtype='str')
         self.dataset_len = len(self.images)
+        self.transf = transf if transf is not None else lambda x: x
 
     def __len__(self):
         return self.dataset_len
@@ -43,6 +44,9 @@ class FaceMaskDataset(Dataset):
         img = read_image(img_name)
         mask = read_image(mask_name)
         mask = mask // 255
+
+        img = self.transf(img)
+        mask = self.transf(mask)
 
         return img, mask
 
