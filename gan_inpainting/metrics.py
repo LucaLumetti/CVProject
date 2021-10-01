@@ -62,13 +62,12 @@ class TrainingMetrics:
                   f"accuracy_d: {accuracy[-1]},")
 
             fig, axs = plt.subplots(len(self.losses.items()), 1)
+            x_axis = range(self.iter)
 
             for i,(name,value) in enumerate(self.losses):
                 print(f"{name}: {value[-1]},")
 
-
-                x_axis = range(self.iter)
-                # loss g
+                # loss i-th
                 axs[i].plot(x_axis, value)
                 axs[i].set_xlabel('iterations')
                 axs[i].set_ylabel(name)
@@ -89,7 +88,34 @@ class TrainingMetrics:
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
 
+            fig,axs = plt.subplots(3,1)
 
+            self.ssim.append(SSIM(self.img, checkpoint_img))
+            self.lpips.append(LPIPS(self.img, checkpoint_img))
+            self.psnr.append(PSNR(self.img, checkpoint_img))
+
+            x_axis = len(self.ssim)
+            # ssim
+            axs[0].plot(x_axis, self.ssim)
+            axs[0].set_xlabel('iterations')
+            axs[0].set_ylabel("SSIM")
+            axs[0].title.set_text("SSIM")
+
+            #PSNR
+            axs[1].plot(x_axis, self.psnr)
+            axs[1].set_xlabel('iterations')
+            axs[1].set_ylabel("PSNR")
+            axs[0].title.set_text("PSNR")
+
+            #LPIPS
+            axs[2].plot(x_axis, self.lpips)
+            axs[2].set_xlabel('iterations')
+            axs[2].set_ylabel("LPIPS")
+            axs[0].title.set_text("PSNR")
+
+            fig.tight_layout()
+            fig.savefig('plots/quality_metrics.png', dpi=fig.dpi)
+            plt.close(fig)
 
             save_image(checkpoint_recon / 255, 'plots/recon.png')
             save_image(checkpoint_img / 255, 'plots/orig.png')
