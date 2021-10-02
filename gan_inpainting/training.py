@@ -125,6 +125,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
                         f"loss_d: {losses['d'][-1]}, " + \
                         f"loss_r: {losses['r'][-1]}, " + \
                         f"loss_tv: {losses['tv'][-1]}, " + \
+                        f"loss_perc: {losses['perc'][-1]}, " + \
+                        f"loss_style: {losses['style'][-1]}, " + \
                         f"accuracy_d: {accuracies['d'][-1]}")
                 checkpoint_coarse = ((reconstructed_coarses[0]+1)*127.5)
                 checkpoint_recon = ((reconstructed_imgs[0]+1)*127.5)
