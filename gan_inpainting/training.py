@@ -125,7 +125,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             if i % 100 == 0:
                 torch.save(netG.state_dict(), 'models/generator.pt')
                 torch.save(netD.state_dict(), 'models/discriminator.pt')
-        metrics.update({"loss_G":loss_generator,"loss_D": loss_discriminator,"loss_R": loss_recon}, pred_pos_neg_imgs, netG, netD)
+            metrics.update(losses, pred_pos_neg_imgs, netG, netD)
     return
 
 if __name__ == '__main__':
