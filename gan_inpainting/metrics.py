@@ -8,7 +8,8 @@ from pytorch_fid.fid_score import calculate_fid_given_paths
 
 import lpips
 
-import copy
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TrainingMetrics:
 
@@ -80,23 +81,26 @@ class TrainingMetrics:
             fig.savefig(f'plots/loss_{count}.png', dpi=fig.dpi)
             plt.close(fig)
 
-            #using CPU
-            #img = self.img.to(device)
-            #mask = self.mask.to(device)
+
+            img = self.img.to(device)
+            mask = self.mask.to(device)
 
             # change img range from [0,255] to [-1,+1]
-            img = self.img / 127.5 - 1
+            img = img / 127.5 - 1
 
-            coarse_out, refined_out = netG(img, self.mask)
-            reconstructed_imgs = refined_out * self.mask + img * (1 - self.mask)
+            coarse_out, refined_out = netG(img, mask)
+            reconstructed_imgs = refined_out * mask + img * (1 - mask)
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
 
             fig,axs = plt.subplots(3,1)
 
-            self.ssim.append(SSIM(self.img, checkpoint_img))
-            self.lpips.append(LPIPS(self.img, checkpoint_img))
-            self.psnr.append(PSNR(self.img, checkpoint_img))
+            #trasform created img for the same size
+            created_img = checkpoint_img.unsqueeze(0)
+
+            self.ssim.append(SSIM(self.img, created_img))
+            self.lpips.append(LPIPS(self.img, created_img))
+            self.psnr.append(PSNR(self.img, created_img))
 
             x_axis = len(self.ssim)
             # ssim
