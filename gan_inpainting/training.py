@@ -79,16 +79,6 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
             pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
-            # canculate accuracy of D
-            with torch.inference_mode():
-                mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
-                mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
-                mean_pos_pred = torch.where(mean_pos_pred > 0.5, 1, 0).type(torch.FloatTensor)
-                mean_neg_pred = torch.where(mean_neg_pred > 0.5, 0, 1).type(torch.FloatTensor)
-                accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
-                tot_elem = mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
-                accuracyD /= tot_elem
-                accuracies['d'].append(accuracyD.item())
 
             # loss + backward D
             loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)
@@ -111,11 +101,11 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             loss_perc, loss_style = lossVGG(imgs, refined_out)
             loss_gen_recon = loss_generator + loss_recon + loss_tv + loss_perc + loss_style
 
-            losses['g'].append(loss_generator.item())
-            losses['r'].append(loss_recon.item())
-            losses['tv'].append(loss_tv.item())
-            losses['perc'].append(loss_perc.item())
-            losses['style'].append(loss_style.item())
+            losses['g'] = loss_generator.item()
+            losses['r'] = loss_recon.item()
+            losses['tv'] = loss_tv.item()
+            losses['perc'] = loss_perc.item()
+            losses['style'] = loss_style.item()
 
             loss_gen_recon.backward()
 

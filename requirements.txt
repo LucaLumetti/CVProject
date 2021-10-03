@@ -163,7 +163,7 @@ tifffile==2021.3.17
 tldr==2.0.0
 toml==0.10.2
 tomli==1.2.1
-torch==1.8.1
+torch==1.9.1
 torchvision==0.9.1
 tqdm==4.61.2
 traitlets==5.0.5

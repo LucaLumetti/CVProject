@@ -8,6 +8,8 @@ from pytorch_fid.fid_score import calculate_fid_given_paths
 
 import lpips
 
+import copy
+
 class TrainingMetrics:
 
     def __init__(self, dataloader):
@@ -22,51 +24,50 @@ class TrainingMetrics:
 
     '''
         Parameters:
-            losses: dict with {name: value} name is useful for the graph's legend
+            loss_list: dict with {name: value} name is useful for the graph's legend
             D_result: result of Discriminator for accuracy
             netG: Generator Net for testing
             netD: Discriminator Net for testing
     '''
-    def update(self, losses: dict , D_result, netG, netD):
+    def update(self, loss_list: dict , D_result, netG, netD):
 
-        if losses is None or len(losses.keys()) < 2:
+        if loss_list is None or len(loss_list.keys()) < 2:
             raise Exception("losses must be at least two")
         self.iter += 1
 
         if self.losses is None:
-            self.losses = losses
+            self.losses = copy.deepcopy(loss_list)
         else:
-            for (name, value) in losses.items():
+            for (name, value) in loss_list.items():
                 self.losses[name].append(value)
 
         pred_pos_imgs, pred_neg_imgs = torch.chunk(D_result, 2, dim=0)
 
-        # with torch.inference_mode():
-        mean_pos_pred = pred_pos_imgs.mean(dim=1)
-        mean_neg_pred = pred_neg_imgs.mean(dim=1)
+        # canculate accuracy of D
+        with torch.inference_mode():
+            mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
+            mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
+            mean_pos_pred = torch.where(mean_pos_pred > 0.5, 1, 0).type(torch.FloatTensor)
+            mean_neg_pred = torch.where(mean_neg_pred > 0.5, 0, 1).type(torch.FloatTensor)
+            accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
+            tot_elem = mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
+            accuracyD /= tot_elem
+            self.accuracy.append(accuracyD.item())
 
-        mean_pos_pred[mean_pos_pred > 0.5] = 1
-        mean_pos_pred[mean_pos_pred <= 0.5] = 0
-
-        mean_neg_pred[mean_neg_pred > 0.5] = 1
-        mean_neg_pred[mean_neg_pred <= 0.5] = 0
-        mean_neg_pred = torch.Tensor([1 if elem == 0 else 0 for elem in mean_neg_pred])
-
-        accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
-        accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
-        self.accuracy.append(accuracyD)
 
         # every 100 img, print losses, update the graph, output an image as example
-        if self.iter % 100 == 0:
+        if self.iter % 20 == 0:
             print(f"[{self.iter / 100}]\t" + \
-                  f"accuracy_d: {accuracy[-1]},")
+                  f"accuracy_d: {self.accuracy[-1]},")
 
             count = self.iter / 100
 
             fig, axs = plt.subplots(len(self.losses.items()), 1)
             x_axis = range(self.iter)
 
-            for i,(name,value) in enumerate(self.losses):
+            for i,key in enumerate(self.losses):
+                name = key
+                value = self.losses[key]
                 print(f"{name}: {value[-1]},")
 
                 # loss i-th
