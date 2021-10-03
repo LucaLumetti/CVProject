@@ -79,10 +79,9 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
             pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
-
             # loss + backward D
             loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)
-            losses['d'].append(loss_discriminator.item())
+            losses['d'] = loss_discriminator.item()
             loss_discriminator.backward(retain_graph=True)
             optimD.step()
 

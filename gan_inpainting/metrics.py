@@ -13,7 +13,7 @@ import copy
 class TrainingMetrics:
 
     def __init__(self, dataloader):
-        self.losses = None
+        self.losses = dict()
         self.accuracy = []
         self.dataloader = dataloader
         self.img, self.mask = next(iter(dataloader))
@@ -35,11 +35,12 @@ class TrainingMetrics:
             raise Exception("losses must be at least two")
         self.iter += 1
 
-        if self.losses is None:
-            self.losses = copy.deepcopy(loss_list)
-        else:
-            for (name, value) in loss_list.items():
-                self.losses[name].append(value)
+        if not self.losses:
+            for name in loss_list.keys():
+                self.losses[name] = list()
+
+        for (name, value) in loss_list.items():
+            self.losses[name].append(value)
 
         pred_pos_imgs, pred_neg_imgs = torch.chunk(D_result, 2, dim=0)
 
@@ -87,7 +88,7 @@ class TrainingMetrics:
             img = self.img / 127.5 - 1
 
             coarse_out, refined_out = netG(img, self.mask)
-            reconstructed_imgs = refined_out * self.mask + imgs * (1 - self.mask)
+            reconstructed_imgs = refined_out * self.mask + img * (1 - self.mask)
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
 
