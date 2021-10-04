@@ -46,7 +46,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
     metrics = TrainingMetrics(dataloader)
 
     for ep in range(config.epoch):
-        for i, (imgs, masks) in enumerate(dataloader):
+        for i, (imgs, masks) in enumerate(dataloader): #[batch_size, channel, W, H]
             netG.zero_grad()
             netD.zero_grad()
             optimG.zero_grad()

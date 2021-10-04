@@ -145,6 +145,7 @@ class TrainingMetrics:
 '''
 def SSIM(original, generated):
     #similarity = ssim(original, generate, data_range=original.max() - original.min(), multichannel=True)
+
     original = original /127.5 -1
     generated = generated/127.5 -1
 
