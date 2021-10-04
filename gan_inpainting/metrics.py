@@ -96,41 +96,6 @@ class TrainingMetrics:
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
 
-            fig,axs = plt.subplots(3,1)
-
-            #trasform created img for the same size
-            image = torch.squeeze(self.img)
-            created_img = checkpoint_img.to(device)
-            image = image.to(device)
-
-            self.psnr.append(PSNR(image, created_img))
-
-            self.ssim.append(SSIM(image, created_img))
-            self.lpips.append(LPIPS(image, created_img))
-
-            x_axis = len(self.ssim)
-            # ssim
-            axs[0].plot(x_axis, self.ssim)
-            axs[0].set_xlabel('iterations')
-            axs[0].set_ylabel("SSIM")
-            axs[0].title.set_text("SSIM")
-
-            #PSNR
-            axs[1].plot(x_axis, self.psnr)
-            axs[1].set_xlabel('iterations')
-            axs[1].set_ylabel("PSNR")
-            axs[0].title.set_text("PSNR")
-
-            #LPIPS
-            axs[2].plot(x_axis, self.lpips)
-            axs[2].set_xlabel('iterations')
-            axs[2].set_ylabel("LPIPS")
-            axs[0].title.set_text("PSNR")
-
-            fig.tight_layout()
-            fig.savefig(f'plots/quality_metrics{count}.png', dpi=fig.dpi)
-            plt.close(fig)
-
             save_image(checkpoint_recon / 255, f'plots/recon{count}.png')
             save_image(checkpoint_img / 255, f'plots/orig{count}.png')
 
@@ -161,6 +126,35 @@ class TestMetrics:
     '''
     def get_metrics(self):
         return {"SSIM": np.mean(self.ssim), "PSNR": np.mean(self.pnsr), "LPIPS": np.mean(self.lpips)}
+
+    '''
+        plot metrics and save it
+    '''
+    def save_plot(self):
+        fig, axs = plt.subplots(3, 1)
+
+        x_axis = len(self.ssim)
+        # ssim
+        axs[0].plot(x_axis, self.ssim)
+        axs[0].set_xlabel('iterations')
+        axs[0].set_ylabel("SSIM")
+        axs[0].title.set_text("SSIM")
+
+        # PSNR
+        axs[1].plot(x_axis, self.pnsr)
+        axs[1].set_xlabel('iterations')
+        axs[1].set_ylabel("PSNR")
+        axs[0].title.set_text("PSNR")
+
+        # LPIPS
+        axs[2].plot(x_axis, self.lpips)
+        axs[2].set_xlabel('iterations')
+        axs[2].set_ylabel("LPIPS")
+        axs[0].title.set_text("PSNR")
+
+        fig.tight_layout()
+        fig.savefig('plots/quality_metrics.png', dpi=fig.dpi)
+        plt.close(fig)
 
     '''
         calculate the Structural SIMilarity (SSIM)
