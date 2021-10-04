@@ -96,7 +96,7 @@ if __name__ == '__main__':
     split_folder = sys.argv[1].split('/')
     subfolder = split_folder[-2]
     filename = split_folder[-1]
-    csvf = open(f'{pathname.parent.parent.parent}/maskffhq.csv', 'a')
+    csvf = open(f'{pathname.parent.parent.parent}/maskffhq_test.csv', 'a')
     path_to_mask = Path(f'{pathname.parent.parent.parent}' + \
                         f'/masked_images/{subfolder}/{filename}')
     path_to_mask.parent.mkdir(parents=True, exist_ok=True)
@@ -113,7 +113,7 @@ if __name__ == '__main__':
         csvf.write(f'{filename.split(".")[0]},{pathname.absolute()},{path_to_mask.absolute()}\n')
         csvf.close()
 
-        dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv')
+        dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq_test.csv')
         dataloader = dataset.loader(batch_size=config.batch_size)
 
         netG = MSSAGenerator(input_size=config.input_size).to(device)
