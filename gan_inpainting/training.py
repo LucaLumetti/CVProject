@@ -71,7 +71,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
             # canculate accuracy of D
-            with torch.inference_mode():
+            with torch.no_grad():
                 mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
                 mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
                 mean_pos_pred = torch.where(mean_pos_pred > 0.5, 1, 0).type(torch.FloatTensor)
