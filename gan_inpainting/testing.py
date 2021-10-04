@@ -10,12 +10,15 @@ from generator import *
 from discriminator import Discriminator
 from loss import *
 from pathlib import Path
+from metrics import TestMetrics
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def test(netG, netD, lossRecon, lossTV, lossVGG, dataloader):
     netG.eval()
     netD.eval()
+
+    metrics_tester = TestMetrics()
 
     losses = {
         'r': [],
@@ -54,6 +57,7 @@ def test(netG, netD, lossRecon, lossTV, lossVGG, dataloader):
 
         # Calculate accuracy and loss, dk if useful bc we're creating a separated file for that
         with torch.inference_mode():
+            '''
             mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
             mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
             mean_pos_pred= torch.where(mean_pos_pred > 0.5,1,0).type(torch.FloatTensor)
@@ -61,7 +65,7 @@ def test(netG, netD, lossRecon, lossTV, lossVGG, dataloader):
             accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
             accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
             accuracies['d'].append(accuracyD.item())
-
+            '''
             # loss G
             pred_neg_imgs = netD(reconstructed_imgs, masks)
             loss_recon = lossRecon(imgs, coarse_out, refined_out, dmasks)
@@ -72,22 +76,27 @@ def test(netG, netD, lossRecon, lossTV, lossVGG, dataloader):
             losses['perc'].append(loss_perc.item())
             losses['style'].append(loss_style.item())
 
-        #TODO: call metrics update
+        metrics_tester.update(imgs,reconstructed_imgs)
 
         if config.batch_size == 1:
             torch.unsqueeze(reconstructed_imgs,0)
 
         for img in range(config.batch_size):
             output = (reconstructed_imgs[img] + 1) * 127.5
-            save_image(output/255,f'{config.dataset_dir}/output/{dataloader.dataset.samples[i]}')
-    return
+            save_image(output/255,f'{config.test_dir}/output/{dataloader.dataset.samples[i]}')
+
+    fid_score = metrics_tester.FID(config.test_dir,f'{config.test_dir}/output',config.batch_size,device)
+    metrics_dict = metrics_tester.get_metrics()
+    metrics_dict['FID'] = fid_score
+
+    return metrics_dict
 
 if __name__ == '__main__':
     config = Config('config.json')
     #logging.basicConfig(filename='test_output.log',encoding='utf-8',level=logging.DEBUG)
     #logging.debug(config)
 
-    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq_test.csv')
+    dataset = FaceMaskDataset(config.test_dir, 'maskffhq_test.csv')
     dataloader = dataset.loader(batch_size=config.batch_size)
 
     netG = MSSAGenerator(input_size=config.input_size).to(device)
@@ -101,5 +110,6 @@ if __name__ == '__main__':
     lossTV = TVLoss()
     lossD = DiscriminatorLoss()
     lossVGG = VGGLoss()
-    test(netG, netD, lossRecon, lossTV, lossVGG, dataloader)
+    metrics = test(netG, netD, lossRecon, lossTV, lossVGG, dataloader)
+    logging.info(metrics)
 
