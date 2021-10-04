@@ -1,5 +1,6 @@
 import sys
 import torch
+import os
 import cv2
 import logging
 from config import Config
@@ -81,14 +82,16 @@ def test(netG, netD, lossG, lossD, dataloader):
             losses['style'].append(loss_style.item())
 
         output = (reconstructed_imgs[0] + 1) * 127.5
-        save_image(output/255,f'{config.test_dir}/output/{filename}')
+        save_image(output/255,f'{config.dataset_dir}/output/{filename}')
     return
 
 if __name__ == '__main__':
     config = Config('config.json')
     logging.basicConfig(filename='test_output.log',encoding='utf-8',level=logging.DEBUG)
     logging.debug(config)
+
     sys.path.append(config.script_dataset_dir)
+
     pathname = Path(sys.argv[1])
     split_folder = sys.argv[1].split('/')
     subfolder = split_folder[-2]
@@ -99,11 +102,10 @@ if __name__ == '__main__':
     path_to_mask.parent.mkdir(parents=True, exist_ok=True)
 
     if path_to_mask.exists():
-        logging.info('Path esistente')
+        logging.info('Path to mask already exists !')
         exit(0)
 
     img = cv2.imread(str(pathname))
-
     mask = create_mask(img, False)
 
     if mask is not None:
@@ -111,7 +113,7 @@ if __name__ == '__main__':
         csvf.write(f'{filename.split(".")[0]},{pathname.absolute()},{path_to_mask.absolute()}\n')
         csvf.close()
 
-        dataset = FaceMaskDataset(config.test_dir, 'maskffhq.csv')
+        dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv')
         dataloader = dataset.loader(batch_size=config.batch_size)
 
         netG = MSSAGenerator(input_size=config.input_size).to(device)
@@ -126,6 +128,9 @@ if __name__ == '__main__':
         lossD = DiscriminatorLoss()
         lossVGG = VGGLoss()
         test(netG, netD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader)
+
+        # deleting csv file to avoid repeating test on same images
+        os.remove(config.csvf_path)
 
     else:
         logging.info(f"Face not found for {pathname}")
