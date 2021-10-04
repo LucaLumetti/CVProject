@@ -1,9 +1,11 @@
+import argparse
+import logging
+
 import numpy as np
 import cv2
 
 import torch
 import torchvision
-import argparse
 from torchvision import transforms as T
 from torchvision.utils import save_image
 import torch.nn.functional as F
@@ -11,7 +13,7 @@ import torch.nn as nn
 
 import matplotlib.pyplot as plt
 
-from generator import Generator
+from generator import *
 from discriminator import Discriminator
 from loss import *
 from dataset import FakeDataset, FaceMaskDataset
@@ -23,7 +25,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
 # also a logger would be nice
-def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloader):
+def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader):
     netG.train()
     netD.train()
 
@@ -31,7 +33,9 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             'g': [],
             'd': [],
             'r': [],
-            'tv': []
+            'tv': [],
+            'perc': [],
+            'style': [],
             }
 
     accuracies = {
@@ -46,6 +50,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             optimD.zero_grad()
             lossG.zero_grad()
             lossD.zero_grad()
+            lossTV.zero_grad()
+            lossVGG.zero_grad()
 
             imgs = imgs.to(device)
             masks = masks.to(device)
@@ -99,23 +105,28 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
             loss_generator = lossG(pred_neg_imgs)
             loss_recon = lossRecon(imgs, coarse_out, refined_out, dmasks)
             loss_tv = lossTV(refined_out)
-            loss_gen_recon = loss_generator + loss_recon + loss_tv
+            loss_perc, loss_style = lossVGG(imgs, refined_out)
+            loss_gen_recon = loss_generator + loss_recon + loss_tv + loss_perc + loss_style
 
             losses['g'].append(loss_generator.item())
             losses['r'].append(loss_recon.item())
             losses['tv'].append(loss_tv.item())
+            losses['perc'].append(loss_perc.item())
+            losses['style'].append(loss_style.item())
 
             loss_gen_recon.backward()
 
             optimG.step()
             # every 500 img, print losses, update the graph, output an image as
             # example
-            if i % 500 == 0:
-                print(f"[{i}]\t" + \
+            if i % 100 == 0:
+                logging.info(f"[{i}]\t" + \
                         f"loss_g: {losses['g'][-1]}, " + \
                         f"loss_d: {losses['d'][-1]}, " + \
                         f"loss_r: {losses['r'][-1]}, " + \
                         f"loss_tv: {losses['tv'][-1]}, " + \
+                        f"loss_perc: {losses['perc'][-1]}, " + \
+                        f"loss_style: {losses['style'][-1]}, " + \
                         f"accuracy_d: {accuracies['d'][-1]}")
                 checkpoint_coarse = ((reconstructed_coarses[0]+1)*127.5)
                 checkpoint_recon = ((reconstructed_imgs[0]+1)*127.5)
@@ -124,7 +135,11 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
                 fig, axs = plt.subplots(3, 1)
                 x_axis = range(len(losses['g']))
                 # loss g
-                axs[0].plot(x_axis, losses['g'], x_axis, losses['r'], x_axis, losses['tv'])
+                axs[0].plot(x_axis, losses['g'], \
+                        x_axis, losses['r'], \
+                        x_axis, losses['tv'], \
+                        x_axis, losses['perc'], \
+                        x_axis, losses['style'])
                 axs[0].set_xlabel('iterations')
                 axs[0].set_ylabel('loss')
                 # loss d
@@ -143,27 +158,51 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloade
                 save_image(checkpoint_coarse/255, f'plots/coarse_{i}_{ep}.png')
                 save_image(checkpoint_recon/255, f'plots/recon_{i}_{ep}.png')
                 save_image(checkpoint_img/255, f'plots/orig_{i}.png')
+                torch.save(netG.state_dict(), 'models/generator.pt')
+                torch.save(netD.state_dict(), 'models/discriminator.pt')
     return
 
 if __name__ == '__main__':
-    config = Config('config.json')
-    print(config)
+    parser = argparse.ArgumentParser(description="Training")
+    parser.add_argument("--config", type=str, help="config file", required=True)
+    parser.add_argument("--checkpoint-gen", type=str, help="path to generator.pt")
+    parser.add_argument("--checkpoint-dis", type=str, help="path to discriminator.pt")
+    parser.add_argument("--debug", help="debug logging level")
+    args = parser.parse_args()
+
+    logging_level = logging.INFO
+    if args.debug:
+        logging_level = logging.DEBUG
+
+    logging.basicConfig(filename='output.log', level=logging_level)
+
+    config = Config(args.config)
+    logging.debug(config)
 
     dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
-    # dataset = FakeDataset()
-    dataloader = dataset.loader(batch_size=config.batch_size)
+    dataloader = dataset.loader(batch_size=config.batch_size, shuffle=True)
 
-    netG = Generator(input_size=config.input_size).to(device)
+    netG = MSSAGenerator(input_size=config.input_size).to(device)
     netD = Discriminator(input_size=config.input_size).to(device)
+
+    if args.checkpoint_gen is not None:
+        logging.info('resuming training of generator')
+        checkpointG = torch.load(args.checkpoint_gen)
+        netG.load_state_dict(checkpointG)
+
+    if args.checkpoint_dis is not None:
+        logging.info('resuming training of discriminator')
+        checkpointD = torch.load(args.checkpoint_dis)
+        netD.load_state_dict(checkpointD)
 
     optimG = torch.optim.Adam(
                 netG.parameters(),
-                lr=config.learning_rate,
+                lr=config.learning_rate_g,
                 betas=(0.5, 0.999)
             )
     optimD = torch.optim.Adam(
                 netD.parameters(),
-                lr=config.learning_rate,
+                lr=config.learning_rate_d,
                 betas=(0.5, 0.999)
             )
 
@@ -171,13 +210,14 @@ if __name__ == '__main__':
     lossRecon = L1ReconLoss()
     lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
+    lossVGG = VGGLoss()
 
     params_g = sum([ p.numel() for p in netG.parameters() ])
     params_d = sum([ p.numel() for p in netD.parameters() ])
 
     print(f'Generator: {params_g} params\n' + \
           f'Discriminator: {params_d} params')
-    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, dataloader)
+    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader)
 
     torch.save(netG.state_dict(), 'models/generator.pt')
     torch.save(netD.state_dict(), 'models/discriminator.pt')

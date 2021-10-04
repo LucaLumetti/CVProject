@@ -31,9 +31,9 @@ The pipeline will be structured as follows:
 - [ ] Metrics analysis in training.py could be rewritten in a separated class
 - [ ] It would be cool to test the network on the same image while training, in
   order to compare the GAN at different epochs
-- [ ] Self attention layer generate CUDA out of memory
-- [ ] Low number of channels in generator and discriminator always bc of CUDA out of
+- [x] Self attention layer generate CUDA out of memory
+- [x] Low number of channels in generator and discriminator always bc of CUDA out of
   memory
-- [ ] Give the possibility to resume a training using the saved model as
-- [ ] Give the option to transform images to 512x512 and 256x256 before training
+- [x] Give the possibility to resume a training using the saved model as
+- [x] Give the option to transform images to 512x512 and 256x256 before training
   starting point
