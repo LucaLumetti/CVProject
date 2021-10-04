@@ -138,12 +138,29 @@ class TrainingMetrics:
 class TestMetrics:
 
     def __init__(self):
-        self.ssim = 0.0
-        self.pnsr = 0.0
-        self.lpips = 0.0
+        self.ssim = []
+        self.pnsr = []
+        self.lpips = []
         self.loss_alex = lpips.LPIPS(net='alex').to(device)
 
-    
+    def update(self, original, generated):
+        if len(original.shape) != 4:
+            raise Exception("Unexpected dimension, images must have 4 dimension")
+
+        if len(generated.shape) == 3:
+            generated = generated.squeeze(0)
+        batch_size = original.shape[0]
+
+        for i in range(batch_size):
+            self.ssim.append(self.SSIM(original[i], generated[i]))
+            self.lpips.append(self.LPIPS(original[i], generated[i]))
+            self.pnsr.append(self.PSNR(original[i], generated[i]))
+
+    '''
+        return a dict with metrics
+    '''
+    def get_metrics(self):
+        return {"SSIM": np.mean(self.ssim), "PSNR": np.mean(self.pnsr), "LPIPS": np.mean(self.lpips)}
 
     '''
         calculate the Structural SIMilarity (SSIM)
@@ -218,7 +235,6 @@ class TestMetrics:
         return:
         --fid_score     : a lower score indicates better-quality images
     '''
-
     def FID(self, data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_workers= 8):
         if device is None:
             dev = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
