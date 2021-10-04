@@ -1,3 +1,6 @@
+import math
+
+import cv2
 import torch
 import matplotlib.pyplot as plt
 from torchvision.utils import save_image
@@ -96,11 +99,14 @@ class TrainingMetrics:
             fig,axs = plt.subplots(3,1)
 
             #trasform created img for the same size
-            created_img = checkpoint_img.unsqueeze(0)
+            image = torch.squeeze(self.img)
+            created_img = checkpoint_img.to(device)
+            image = image.to(device)
 
-            self.ssim.append(SSIM(self.img, created_img))
-            self.lpips.append(LPIPS(self.img, created_img))
-            self.psnr.append(PSNR(self.img, created_img))
+            self.psnr.append(PSNR(image, created_img))
+
+            self.ssim.append(SSIM(image, created_img))
+            self.lpips.append(LPIPS(image, created_img))
 
             x_axis = len(self.ssim)
             # ssim
@@ -137,9 +143,43 @@ class TrainingMetrics:
     return:
     --score         : a bigger score indicates better images 
 '''
-def SSIM(original, generate):
-    similarity = ssim(original, generate, data_range=original.max() - original.min())
-    return similarity
+def SSIM(original, generated):
+    #similarity = ssim(original, generate, data_range=original.max() - original.min(), multichannel=True)
+    original = original /127.5 -1
+    generated = generated/127.5 -1
+
+    original = original.cpu()
+    generated = generated.cpu()
+
+    original = original.numpy()
+    generated = generated.numpy()
+
+    original = np.swapaxes(original, 0,1)
+    original = np.swapaxes(original, 1, 2)
+
+    generated = np.swapaxes(generated, 0, 1)
+    generated = np.swapaxes(generated, 1, 2)
+
+    ssims = []
+    for i in range(3):
+        C1 = (0.01 * 255) ** 2
+        C2 = (0.03 * 255) ** 2
+
+        kernel = cv2.getGaussianKernel(11, 1.5)
+        window = np.outer(kernel, kernel.transpose())
+
+        mu1 = cv2.filter2D(original, -1, window)[5:-5, 5:-5]  # valid
+        mu2 = cv2.filter2D(generated, -1, window)[5:-5, 5:-5]
+        mu1_sq = mu1 ** 2
+        mu2_sq = mu2 ** 2
+        mu1_mu2 = mu1 * mu2
+        sigma1_sq = cv2.filter2D(original ** 2, -1, window)[5:-5, 5:-5] - mu1_sq
+        sigma2_sq = cv2.filter2D(generated ** 2, -1, window)[5:-5, 5:-5] - mu2_sq
+        sigma12 = cv2.filter2D(original * generated, -1, window)[5:-5, 5:-5] - mu1_mu2
+
+        ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
+        ssims.append(ssim_map.mean())
+    return np.array(ssims).mean()
 
 
 '''
@@ -151,11 +191,11 @@ def SSIM(original, generate):
     --score         : a bigger psnr indicates better images
 '''
 def PSNR(original, generate):
-    mse = np.mean((original - generate) ** 2)
+    mse = torch.mean((original - generate) ** 2)
     if mse == 0:
         return 100
     PIXEL_MAX = 255.0
-    psnr = 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
+    psnr = 20 * torch.log10(PIXEL_MAX / torch.sqrt(mse))
     return psnr
 
 '''
@@ -172,7 +212,7 @@ def PSNR(original, generate):
     --fid_score     : a lower score indicates better-quality images
 '''
 
-def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_worker= 8):
+def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_workers= 8):
     if device is None:
         dev = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
     else:
@@ -183,8 +223,7 @@ def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_worker
     fid_value = calculate_fid_given_paths(paths,
                                           batch_size,
                                           dev,
-                                          dims,
-                                          num_workers)
+                                          dims)
     print('FID: ', fid_value)
     return fid_value
 
@@ -202,7 +241,7 @@ def LPIPS(original, generated):
     original = original / 127.5 - 1
     generated = generated / 127.5 -1
 
-    loss_alex = lpips.LPIPS(net='alex')
+    loss_alex = lpips.LPIPS(net='alex').to(device)
 
     result = loss_alex(original, generated)
 
