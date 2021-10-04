@@ -106,6 +106,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             loss_recon = lossRecon(imgs, coarse_out, refined_out, dmasks)
             loss_tv = lossTV(refined_out)
             loss_perc, loss_style = lossVGG(imgs, refined_out)
+            loss_perc *= 0.05
+            loss_style *= 40
             loss_gen_recon = loss_generator + loss_recon + loss_tv + loss_perc + loss_style
 
             losses['g'].append(loss_generator.item())
