@@ -135,6 +135,13 @@ class TrainingMetrics:
             save_image(checkpoint_img / 255, f'plots/orig{count}.png')
 
 
+class TestMetrics:
+
+    def __init__(self):
+        self.ssim = 0.0
+        self.pnsr = 0.0
+        self.l
+
 '''
     calculate the Structural SIMilarity (SSIM)
     Params:
@@ -144,10 +151,6 @@ class TrainingMetrics:
     --score         : a bigger score indicates better images 
 '''
 def SSIM(original, generated):
-    #similarity = ssim(original, generate, data_range=original.max() - original.min(), multichannel=True)
-
-    original = original /127.5 -1
-    generated = generated/127.5 -1
 
     original = original.cpu()
     generated = generated.cpu()
