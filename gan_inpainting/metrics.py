@@ -140,113 +140,116 @@ class TestMetrics:
     def __init__(self):
         self.ssim = 0.0
         self.pnsr = 0.0
-        self.l
+        self.lpips = 0.0
+        self.loss_alex = lpips.LPIPS(net='alex').to(device)
 
-'''
-    calculate the Structural SIMilarity (SSIM)
-    Params:
-    --original      : orignal image
-    --generate      : generator output
-    return:
-    --score         : a bigger score indicates better images 
-'''
-def SSIM(original, generated):
-
-    original = original.cpu()
-    generated = generated.cpu()
-
-    original = original.numpy()
-    generated = generated.numpy()
-
-    original = np.swapaxes(original, 0,1)
-    original = np.swapaxes(original, 1, 2)
-
-    generated = np.swapaxes(generated, 0, 1)
-    generated = np.swapaxes(generated, 1, 2)
-
-    ssims = []
-    for i in range(3):
-        C1 = (0.01 * 255) ** 2
-        C2 = (0.03 * 255) ** 2
-
-        kernel = cv2.getGaussianKernel(11, 1.5)
-        window = np.outer(kernel, kernel.transpose())
-
-        mu1 = cv2.filter2D(original, -1, window)[5:-5, 5:-5]  # valid
-        mu2 = cv2.filter2D(generated, -1, window)[5:-5, 5:-5]
-        mu1_sq = mu1 ** 2
-        mu2_sq = mu2 ** 2
-        mu1_mu2 = mu1 * mu2
-        sigma1_sq = cv2.filter2D(original ** 2, -1, window)[5:-5, 5:-5] - mu1_sq
-        sigma2_sq = cv2.filter2D(generated ** 2, -1, window)[5:-5, 5:-5] - mu2_sq
-        sigma12 = cv2.filter2D(original * generated, -1, window)[5:-5, 5:-5] - mu1_mu2
-
-        ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
-        ssims.append(ssim_map.mean())
-    return np.array(ssims).mean()
-
-
-'''
-    Calculate the Peak Signal to Noise Ratio (PSNR) 
-    Params:
-    --original      : orignal image
-    --generate      : generator output
-    return:
-    --score         : a bigger psnr indicates better images
-'''
-def PSNR(original, generate):
-    mse = torch.mean((original - generate) ** 2)
-    if mse == 0:
-        return 100
-    PIXEL_MAX = 255.0
-    psnr = 20 * torch.log10(PIXEL_MAX / torch.sqrt(mse))
-    return psnr
-
-'''
-    Calculate Fréchet Inception Distance (FID) from original's dataset and generate's dataset
-    Params:
-    --data_orig     : path of the dataset with the original images
-    --data_gen      : path with the dataset with the generate images
-    --batch_size    : batch_size for dataloader
-    --device        : it can be like cuda:0 or cpu, it's better if there is a GPU
-    --dims          : we can use different layer of the inception network, default is 2048 like paper
-    --num_worker    : num_worker fro operations
     
-    return:
-    --fid_score     : a lower score indicates better-quality images
-'''
 
-def FID(data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_workers= 8):
-    if device is None:
-        dev = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
-    else:
-        dev = torch.device(device)
+    '''
+        calculate the Structural SIMilarity (SSIM)
+        Params:
+        --original      : orignal image
+        --generate      : generator output
+        return:
+        --score         : a bigger score indicates better images 
+    '''
+    def SSIM(self, original, generated):
 
-    paths = [data_orig,data_gen]
+        original = original.cpu()
+        generated = generated.cpu()
 
-    fid_value = calculate_fid_given_paths(paths,
-                                          batch_size,
-                                          dev,
-                                          dims)
-    print('FID: ', fid_value)
-    return fid_value
+        original = original.numpy()
+        generated = generated.numpy()
+
+        original = np.swapaxes(original, 0,1)
+        original = np.swapaxes(original, 1, 2)
+
+        generated = np.swapaxes(generated, 0, 1)
+        generated = np.swapaxes(generated, 1, 2)
+
+        ssims = []
+        for i in range(3):
+            C1 = (0.01 * 255) ** 2
+            C2 = (0.03 * 255) ** 2
+
+            kernel = cv2.getGaussianKernel(11, 1.5)
+            window = np.outer(kernel, kernel.transpose())
+
+            mu1 = cv2.filter2D(original, -1, window)[5:-5, 5:-5]  # valid
+            mu2 = cv2.filter2D(generated, -1, window)[5:-5, 5:-5]
+            mu1_sq = mu1 ** 2
+            mu2_sq = mu2 ** 2
+            mu1_mu2 = mu1 * mu2
+            sigma1_sq = cv2.filter2D(original ** 2, -1, window)[5:-5, 5:-5] - mu1_sq
+            sigma2_sq = cv2.filter2D(generated ** 2, -1, window)[5:-5, 5:-5] - mu2_sq
+            sigma12 = cv2.filter2D(original * generated, -1, window)[5:-5, 5:-5] - mu1_mu2
+
+            ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
+            ssims.append(ssim_map.mean())
+        return np.array(ssims).mean()
 
 
-'''
-    calculate Perceptual similarity (LPIPS)
-    Params:
-    --original      : tansor with original image, size (N,3,H,W)
-    --generated     : tensot with generated image, size (N,3,H,W)
-    return:
-    --result        : average between N LPIPS
-'''
-def LPIPS(original, generated):
-    # change img range from [0,255] to [-1,+1]
-    original = original / 127.5 - 1
-    generated = generated / 127.5 -1
+    '''
+        Calculate the Peak Signal to Noise Ratio (PSNR) 
+        Params:
+        --original      : orignal image
+        --generate      : generator output
+        return:
+        --score         : a bigger psnr indicates better images
+    '''
+    def PSNR(self, original, generate):
+        mse = torch.mean((original - generate) ** 2)
+        if mse == 0:
+            return 100
+        PIXEL_MAX = 255.0
+        psnr = 20 * torch.log10(PIXEL_MAX / torch.sqrt(mse))
+        return psnr
 
-    loss_alex = lpips.LPIPS(net='alex').to(device)
+    '''
+        Calculate Fréchet Inception Distance (FID) from original's dataset and generate's dataset
+        Params:
+        --data_orig     : path of the dataset with the original images
+        --data_gen      : path with the dataset with the generate images
+        --batch_size    : batch_size for dataloader
+        --device        : it can be like cuda:0 or cpu, it's better if there is a GPU
+        --dims          : we can use different layer of the inception network, default is 2048 like paper
+        --num_worker    : num_worker fro operations
+        
+        return:
+        --fid_score     : a lower score indicates better-quality images
+    '''
 
-    result = loss_alex(original, generated)
+    def FID(self, data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_workers= 8):
+        if device is None:
+            dev = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
+        else:
+            dev = torch.device(device)
 
-    return result.mean
+        paths = [data_orig,data_gen]
+
+        fid_value = calculate_fid_given_paths(paths,
+                                              batch_size,
+                                              dev,
+                                              dims)
+        print('FID: ', fid_value)
+        return fid_value
+
+
+    '''
+        calculate Perceptual similarity (LPIPS)
+        Params:
+        --original      : tansor with original image, size (N,3,H,W)
+        --generated     : tensot with generated image, size (N,3,H,W)
+        return:
+        --result        : average between N LPIPS
+    '''
+    def LPIPS(self, original, generated):
+        # change img range from [0,255] to [-1,+1]
+        original = original / 127.5 - 1
+        generated = generated / 127.5 -1
+
+
+
+        result = self.loss_alex(original, generated)
+
+        return result.mean
