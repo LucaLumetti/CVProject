@@ -20,10 +20,7 @@ def test(netG, netD, dataloader):
 
     metrics = {
             'l1': [],
-            }
-
-    accuracies = {
-            'd': []
+            'accuracy': []
             }
 
     with torch.no_grad():
@@ -49,17 +46,22 @@ def test(netG, netD, dataloader):
             mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
             mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
             mean_pos_pred = torch.where(mean_pos_pred > 0.5, 1, 0).type(torch.FloatTensor)
-            mean_pos_neg = torch.where(mean_pos_pred < 0.5, 0, 1).type(torch.FloatTensor)
+            mean_neg_pred = torch.where(mean_neg_pred > 0.5, 0, 1).type(torch.FloatTensor)
             accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
-            accuracyD /= mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
-            accuracies['d'].append(accuracyD.item())
+            tot_elem = mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
+            accuracyD /= tot_elem
+            metrics['accuracy'].append(accuracyD.item())
 
             # Calculate L1 loss over the batch
             l1_mean = torch.mean(torch.abs(imgs - reconstructed_imgs))
             metrics['l1'].append(l1_mean)
 
             output = (reconstructed_imgs[0] + 1) * 127.5
-            save_image(output/255, f'{config.output_dir}/{i}.png')
+            # must save all the batch_size images
+            # save_image(output/255, f'{config.output_dir}/{i}.png')
+
+    for key in metrics:
+        metrics[key] = torch.mean(torch.tensor(metrics[key])).item()
     return metrics
 
 if __name__ == '__main__':
@@ -73,7 +75,8 @@ if __name__ == '__main__':
     netG = MSSAGenerator(input_size=config.input_size).to(device)
     netD = Discriminator(input_size=config.input_size).to(device)
 
-    netG.load_state_dict(torch.load('models/generator.pt'))
-    netD.load_state_dict(torch.load('models/discriminator.pt'))
+    netG.load_state_dict(torch.load('models/generator.pt', map_location=device))
+    netD.load_state_dict(torch.load('models/discriminator.pt', map_location=device))
 
-    test(netG, netD, dataloader)
+    metrics = test(netG, netD, dataloader)
+    print(metrics)
