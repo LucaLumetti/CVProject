@@ -11,11 +11,9 @@ from pytorch_fid.fid_score import calculate_fid_given_paths
 
 import lpips
 
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TrainingMetrics:
-
     def __init__(self, dataloader):
         self.losses = dict()
         self.accuracy = []
@@ -34,10 +32,8 @@ class TrainingMetrics:
             netD: Discriminator Net for testing
     '''
     def update(self, loss_list: dict , D_result, netG, netD):
-
         if loss_list is None or len(loss_list.keys()) < 2:
             raise Exception("losses must be at least two")
-        self.iter += 1
 
         if not self.losses:
             for name in loss_list.keys():
@@ -58,7 +54,6 @@ class TrainingMetrics:
             tot_elem = mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
             accuracyD /= tot_elem
             self.accuracy.append(accuracyD.item())
-
 
         # every 100 img, print losses, update the graph, output an image as example
         if self.iter % 100 == 0:
@@ -96,12 +91,11 @@ class TrainingMetrics:
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
             checkpoint_img = ((img[0] + 1) * 127.5)
 
-            save_image(checkpoint_recon / 255, f'plots/recon{count}.png')
-            save_image(checkpoint_img / 255, f'plots/orig{count}.png')
-
+            save_image(checkpoint_recon / 255, f'plots/recon_{count}.png')
+            save_image(checkpoint_img / 255, f'plots/orig_{count}.png')
+        self.iter += 1
 
 class TestMetrics:
-
     def __init__(self):
         self.ssim = []
         self.pnsr = []
@@ -162,10 +156,9 @@ class TestMetrics:
         --original      : orignal image
         --generate      : generator output
         return:
-        --score         : a bigger score indicates better images 
+        --score         : a bigger score indicates better images
     '''
     def SSIM(self, original, generated):
-
         original = original.cpu()
         generated = generated.cpu()
 
@@ -201,7 +194,7 @@ class TestMetrics:
 
 
     '''
-        Calculate the Peak Signal to Noise Ratio (PSNR) 
+        Calculate the Peak Signal to Noise Ratio (PSNR)
         Params:
         --original      : orignal image
         --generate      : generator output
@@ -225,7 +218,7 @@ class TestMetrics:
         --device        : it can be like cuda:0 or cpu, it's better if there is a GPU
         --dims          : we can use different layer of the inception network, default is 2048 like paper
         --num_worker    : num_worker fro operations
-        
+
         return:
         --fid_score     : a lower score indicates better-quality images
     '''
@@ -244,7 +237,6 @@ class TestMetrics:
         print('FID: ', fid_value)
         return fid_value
 
-
     '''
         calculate Perceptual similarity (LPIPS)
         Params:
@@ -258,8 +250,6 @@ class TestMetrics:
         original = original / 127.5 - 1
         generated = generated / 127.5 -1
 
-
-
         result = self.loss_alex(original, generated)
 
-        return result.mean
+        return result.mean()
