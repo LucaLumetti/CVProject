@@ -27,7 +27,7 @@ The pipeline will be structured as follows:
 
 ## TODO
 - [x] Weights should be initialized with Xavier (or similar)
-- [ ] Test the script to test the network (testing.py)
+- [x] Test the script to test the network (testing.py)
 - [ ] Metrics analysis in training.py could be rewritten in a separated class
 - [ ] It would be cool to test the network on the same image while training, in
   order to compare the GAN at different epochs
