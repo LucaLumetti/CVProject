@@ -61,7 +61,7 @@ class TrainingMetrics:
 
 
         # every 100 img, print losses, update the graph, output an image as example
-        if self.iter % 20 == 0:
+        if self.iter % 100 == 0:
             print(f"[{self.iter / 100}]\t" + \
                   f"accuracy_d: {self.accuracy[-1]},")
 
