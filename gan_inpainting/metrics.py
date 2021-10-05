@@ -85,7 +85,7 @@ class TrainingMetrics:
 
             coarse_out, refined_out = netG(img, mask)
 
-            coarse_imgs = coarse_out * mask + imgs * (1 - mask)
+            coarse_imgs = coarse_out * mask + img * (1 - mask)
             reconstructed_imgs = refined_out * mask + img * (1 - mask)
 
             checkpoint_coarse = ((coarse_imgs[0] + 1) * 127.5)
