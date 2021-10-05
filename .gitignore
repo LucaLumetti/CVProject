@@ -13,3 +13,4 @@ pip-log.txt
 .idea
 
 *.csv
+gan_inpainting/config.json
