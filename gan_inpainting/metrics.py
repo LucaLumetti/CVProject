@@ -63,11 +63,11 @@ class TrainingMetrics:
             count = self.iter / 100
 
             fig, axs = plt.subplots(len(self.losses.items()), 1)
-            x_axis = range(self.iter)
 
             for i,key in enumerate(self.losses):
                 name = key
                 value = self.losses[key]
+                x_axis = range(len(self.losses[key]))
                 print(f"{name}: {value[-1]},")
 
                 # loss i-th
