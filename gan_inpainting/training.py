@@ -19,6 +19,8 @@ from loss import *
 from dataset import FakeDataset, FaceMaskDataset
 from config import Config
 
+from metrics import TrainingMetrics
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # torch.autograd.set_detect_anomaly(True)
@@ -41,9 +43,10 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
     accuracies = {
             'd': []
             }
+    metrics = TrainingMetrics(dataloader)
 
     for ep in range(config.epoch):
-        for i, (imgs, masks) in enumerate(dataloader):
+        for i, (imgs, masks) in enumerate(dataloader): #[batch_size, channel, W, H]
             netG.zero_grad()
             netD.zero_grad()
             optimG.zero_grad()
@@ -76,20 +79,9 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
             pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
-            # canculate accuracy of D
-            with torch.no_grad():
-                mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
-                mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
-                mean_pos_pred = torch.where(mean_pos_pred > 0.5, 1, 0).type(torch.FloatTensor)
-                mean_neg_pred = torch.where(mean_neg_pred > 0.5, 0, 1).type(torch.FloatTensor)
-                accuracyD = torch.sum(mean_pos_pred) + torch.sum(mean_neg_pred)
-                tot_elem = mean_pos_pred.shape[0] + mean_neg_pred.shape[0]
-                accuracyD /= tot_elem
-                accuracies['d'].append(accuracyD.item())
-
             # loss + backward D
             loss_discriminator = lossD(pred_pos_imgs, pred_neg_imgs)
-            losses['d'].append(loss_discriminator.item())
+            losses['d'] = loss_discriminator.item()
             loss_discriminator.backward(retain_graph=True)
             optimD.step()
 
@@ -110,58 +102,21 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             loss_style *= 40
             loss_gen_recon = loss_generator + loss_recon + loss_tv + loss_perc + loss_style
 
-            losses['g'].append(loss_generator.item())
-            losses['r'].append(loss_recon.item())
-            losses['tv'].append(loss_tv.item())
-            losses['perc'].append(loss_perc.item())
-            losses['style'].append(loss_style.item())
+            losses['g'] = loss_generator.item()
+            losses['r'] = loss_recon.item()
+            losses['tv'] = loss_tv.item()
+            losses['perc'] = loss_perc.item()
+            losses['style'] = loss_style.item()
 
             loss_gen_recon.backward()
 
             optimG.step()
-            # every 500 img, print losses, update the graph, output an image as
+            # every 100 img, print losses, update the graph, output an image as
             # example
             if i % 100 == 0:
-                logging.info(f"[{i}]\t" + \
-                        f"loss_g: {losses['g'][-1]}, " + \
-                        f"loss_d: {losses['d'][-1]}, " + \
-                        f"loss_r: {losses['r'][-1]}, " + \
-                        f"loss_tv: {losses['tv'][-1]}, " + \
-                        f"loss_perc: {losses['perc'][-1]}, " + \
-                        f"loss_style: {losses['style'][-1]}, " + \
-                        f"accuracy_d: {accuracies['d'][-1]}")
-                checkpoint_coarse = ((reconstructed_coarses[0]+1)*127.5)
-                checkpoint_recon = ((reconstructed_imgs[0]+1)*127.5)
-                checkpoint_img = ((imgs[0]+1)*127.5)
-
-                fig, axs = plt.subplots(3, 1)
-                x_axis = range(len(losses['g']))
-                # loss g
-                axs[0].plot(x_axis, losses['g'], \
-                        x_axis, losses['r'], \
-                        x_axis, losses['tv'], \
-                        x_axis, losses['perc'], \
-                        x_axis, losses['style'])
-                axs[0].set_xlabel('iterations')
-                axs[0].set_ylabel('loss')
-                # loss d
-                axs[1].plot(x_axis, losses['d'])
-                axs[1].set_xlabel('iterations')
-                axs[1].set_ylabel('loss')
-                # acc d
-                axs[2].plot(x_axis, accuracies['d'])
-                axs[2].set_xlabel('iterations')
-                axs[2].set_ylabel('accuracy')
-                axs[2].set_ylim(0,1)
-                fig.tight_layout()
-                fig.savefig('plots/loss.png', dpi=fig.dpi)
-                plt.close(fig)
-
-                save_image(checkpoint_coarse/255, f'plots/coarse_{i}_{ep}.png')
-                save_image(checkpoint_recon/255, f'plots/recon_{i}_{ep}.png')
-                save_image(checkpoint_img/255, f'plots/orig_{i}.png')
                 torch.save(netG.state_dict(), 'models/generator.pt')
                 torch.save(netD.state_dict(), 'models/discriminator.pt')
+            metrics.update(losses, pred_pos_neg_imgs, netG, netD)
     return
 
 if __name__ == '__main__':
