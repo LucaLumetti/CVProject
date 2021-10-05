@@ -19,6 +19,8 @@ def test(netG, netD, dataloader):
     netG.eval()
     netD.eval()
 
+    metrics_tester = TestMetrics()
+
     metrics = {
             'l1': [],
             'accuracy': []
