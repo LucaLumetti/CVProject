@@ -61,25 +61,15 @@ def test(netG, netD, dataloader):
             output = (reconstructed_imgs + 1) * 127.5
 
             print(output.shape)
+            metrics_tester.update(imgs, reconstructed_imgs)
             for d in range(output.size(0)):
-                print(f'd: {d}')
                 save_image(output[d]/255, f'{config.output_dir}/{i*config.batch_size+d}.png')
 
-    for key in metrics:
-        metrics[key] = torch.mean(torch.tensor(metrics[key])).item()
-    return metrics
-        metrics_tester.update(imgs,reconstructed_imgs)
-
-        if config.batch_size == 1:
-            torch.unsqueeze(reconstructed_imgs,0)
-
-        for img in range(config.batch_size):
-            output = (reconstructed_imgs[img] + 1) * 127.5
-            save_image(output/255,f'{config.test_dir}/output/{dataloader.dataset.samples[i]}')
-
-    fid_score = metrics_tester.FID(config.test_dir,f'{config.test_dir}/output',config.batch_size,device)
-    metrics_dict = metrics_tester.get_metrics()
-    metrics_dict['FID'] = fid_score
+        fid_score = metrics_tester.FID(config.test_dir,f'{config.test_dir}/output',config.batch_size,device)
+        metrics_dict = metrics_tester.get_metrics()
+        metrics_dict['FID'] = fid_score
+        for key in metrics:
+            metrics_dict[key] = torch.mean(torch.tensor(metrics[key])).item()
 
     return metrics_dict
 
