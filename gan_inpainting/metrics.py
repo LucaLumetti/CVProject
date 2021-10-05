@@ -60,8 +60,6 @@ class TrainingMetrics:
             print(f"[{self.iter / 100}]\t" + \
                   f"accuracy_d: {self.accuracy[-1]},")
 
-            count = self.iter / 100
-
             fig, axs = plt.subplots(len(self.losses.items()), 1)
 
             for i,key in enumerate(self.losses):
@@ -76,9 +74,8 @@ class TrainingMetrics:
                 axs[i].set_ylabel(name)
 
             fig.tight_layout()
-            fig.savefig(f'plots/loss_{count}.png', dpi=fig.dpi)
+            fig.savefig(f'plots/loss_{self.iter}.png', dpi=fig.dpi)
             plt.close(fig)
-
 
             img = self.img.to(device)
             mask = self.mask.to(device)
@@ -87,12 +84,18 @@ class TrainingMetrics:
             img = img / 127.5 - 1
 
             coarse_out, refined_out = netG(img, mask)
+
+            coarse_imgs = coarse_out * mask + imgs * (1 - mask)
             reconstructed_imgs = refined_out * mask + img * (1 - mask)
+
+            checkpoint_coarse = ((coarse_imgs[0] + 1) * 127.5)
             checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
+
             checkpoint_img = ((img[0] + 1) * 127.5)
 
-            save_image(checkpoint_recon / 255, f'plots/recon_{count}.png')
-            save_image(checkpoint_img / 255, f'plots/orig_{count}.png')
+            save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
+            save_image(checkpoint_recon / 255, f'plots/recon_{self.iter}.png')
+            save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
         self.iter += 1
 
 class TestMetrics:
