@@ -37,3 +37,4 @@ The pipeline will be structured as follows:
 - [x] Give the possibility to resume a training using the saved model as
 - [x] Give the option to transform images to 512x512 and 256x256 before training
   starting point
+- [x] Test FID metrics because we need a dataset of generated image
