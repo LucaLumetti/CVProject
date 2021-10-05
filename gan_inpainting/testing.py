@@ -25,6 +25,7 @@ def test(netG, netD, dataloader):
 
     with torch.no_grad():
         for i, (imgs,masks) in enumerate(dataloader):
+            print(f'i:{i}')
             imgs = imgs.to(device)
             masks = masks.to(device)
 
@@ -56,9 +57,12 @@ def test(netG, netD, dataloader):
             l1_mean = torch.mean(torch.abs(imgs - reconstructed_imgs))
             metrics['l1'].append(l1_mean)
 
-            output = (reconstructed_imgs[0] + 1) * 127.5
-            # must save all the batch_size images
-            # save_image(output/255, f'{config.output_dir}/{i}.png')
+            output = (reconstructed_imgs + 1) * 127.5
+
+            print(output.shape)
+            for d in range(output.size(0)):
+                print(f'd: {d}')
+                save_image(output[d]/255, f'{config.output_dir}/{i*config.batch_size+d}.png')
 
     for key in metrics:
         metrics[key] = torch.mean(torch.tensor(metrics[key])).item()
