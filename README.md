@@ -36,6 +36,6 @@ The pipeline will be structured as follows:
   checkpoint
 - [x] Give the option to transform images to 512x512 and 256x256 before training
   starting point
-- [ ] Test FID metrics because we need a dataset of generated image
+- [x] Test FID metrics because we need a dataset of generated image
 - [ ] It would be cool to test the network on the same image while training, in
   order to compare the GAN at different epochs
