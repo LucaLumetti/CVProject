@@ -7,7 +7,7 @@ from torchvision.utils import save_image
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
 
-from pytorch_fid.fid_score import calculate_fid_given_paths
+from fid_score import calculate_fid_given_paths
 
 import lpips
 
@@ -125,7 +125,7 @@ class TestMetrics:
         return a dict with metrics
     '''
     def get_metrics(self):
-        return {"SSIM": np.mean(self.ssim), "PSNR": np.mean(self.pnsr), "LPIPS": np.mean(self.lpips)}
+        return dict({"SSIM": np.mean(self.ssim), "PSNR": np.mean(self.pnsr), "LPIPS": np.mean(self.lpips)})
 
     '''
         plot metrics and save it
@@ -214,7 +214,7 @@ class TestMetrics:
             return 100
         PIXEL_MAX = 255.0
         psnr = 20 * torch.log10(PIXEL_MAX / torch.sqrt(mse))
-        return psnr
+        return psnr.cpu().numpy()
 
     '''
         Calculate Fréchet Inception Distance (FID) from original's dataset and generate's dataset
@@ -229,7 +229,7 @@ class TestMetrics:
         return:
         --fid_score     : a lower score indicates better-quality images
     '''
-    def FID(self, data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_workers= 8):
+    def FID(self, data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_workers= 2):
         if device is None:
             dev = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
         else:
@@ -258,8 +258,6 @@ class TestMetrics:
         original = original / 127.5 - 1
         generated = generated / 127.5 -1
 
-
-
         result = self.loss_alex(original, generated)
 
-        return result.mean
+        return result.cpu().numpy().mean()

@@ -67,7 +67,7 @@ def test(netG, netD, dataloader):
             for d in range(output.size(0)):
                 save_image(output[d]/255, f'{config.output_dir}/{i*config.batch_size+d}.png')
 
-        fid_score = metrics_tester.FID(config.test_dir,f'{config.output_dir}',config.batch_size,device)
+        fid_score = metrics_tester.FID(config.test_dir, config.output_dir, config.batch_size,device)
         metrics_dict = metrics_tester.get_metrics()
         metrics_dict['FID'] = fid_score
         for key in metrics:
