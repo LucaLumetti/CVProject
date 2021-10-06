@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 
 import numpy as np
 import cv2
@@ -27,7 +28,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
 # also a logger would be nice
-def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader):
+def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader, metrics):
     netG.train()
     netD.train()
 
@@ -43,7 +44,6 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
     accuracies = {
             'd': []
             }
-    metrics = TrainingMetrics(dataloader)
 
     for ep in range(config.epoch):
         for i, (imgs, masks) in enumerate(dataloader): #[batch_size, channel, W, H]
@@ -113,25 +113,27 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             optimG.step()
             # every 100 img, print losses, update the graph, output an image as
             # example
-            if i % 100 == 0:
+            if i % metrics.screenshot_step == 0:
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
                 save_image(checkpoint_coarse / 255, f'plots/coarse_{i}.png')
                 save_image(checkpoint_recon / 255, f'plots/recon_{i}.png')
 
-                # save them in metrics.update()
-                torch.save(netG.state_dict(), 'models/generator.pt')
-                torch.save(netD.state_dict(), 'models/discriminator.pt')
+                # maybe save them in metrics.update()
+                torch.save(netG.state_dict(), config.checkpoint_dir + '/generator.pt')
+                torch.save(netD.state_dict(), config.checkpoint_dir + '/discriminator.pt')
+                torch.save(optimG.state_dict(), config.checkpoint_dir + '/opt_generator.pt')
+                torch.save(optimD.state_dict(), config.checkpoint_dir + '/opt_discriminator.pt')
             metrics.update(losses, pred_pos_neg_imgs, netG, netD)
     return
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Training")
     parser.add_argument("--config", type=str, help="config file", required=True)
-    parser.add_argument("--checkpoint-gen", type=str, help="path to generator.pt")
-    parser.add_argument("--checkpoint-dis", type=str, help="path to discriminator.pt")
     parser.add_argument("--debug", help="debug logging level")
+    parser.add_argument("--checkpoint", help="resume training")
+    parser.add_argument("--screenshot_step", type=int, help="how often output metrics and imgs", default=100)
     args = parser.parse_args()
 
     logging_level = logging.INFO
@@ -149,16 +151,6 @@ if __name__ == '__main__':
     netG = MSSAGenerator(input_size=config.input_size).to(device)
     netD = Discriminator(input_size=config.input_size).to(device)
 
-    if args.checkpoint_gen is not None:
-        logging.info('resuming training of generator')
-        checkpointG = torch.load(args.checkpoint_gen)
-        netG.load_state_dict(checkpointG)
-
-    if args.checkpoint_dis is not None:
-        logging.info('resuming training of discriminator')
-        checkpointD = torch.load(args.checkpoint_dis)
-        netD.load_state_dict(checkpointD)
-
     optimG = torch.optim.Adam(
                 netG.parameters(),
                 lr=config.learning_rate_g,
@@ -170,18 +162,46 @@ if __name__ == '__main__':
                 betas=(0.5, 0.999)
             )
 
+    if args.checkpoint is not None:
+        generator_dir = config.checkpoint_dir + '/generator.pt'
+        discriminator_dir = config.checkpoint_dir + '/discriminator.pt'
+        opt_generator_dir = config.checkpoint_dir + '/opt_generator.pt'
+        opt_discriminator_dir = config.checkpoint_dir + '/opt_discriminator.pt'
+
+        if os.path.isfile(generator_dir):
+            logging.info('resuming training of generator')
+            checkpointG = torch.load(generator_dir)
+            netG.load_state_dict(checkpointG)
+
+        if os.path.isfile(discriminator_dir):
+            logging.info('resuming training of discriminator')
+            checkpointD = torch.load(discriminator_dir)
+            netD.load_state_dict(checkpointD)
+
+        if os.path.isfile(opt_generator_dir):
+            logging.info('resuming training of opt_generator')
+            checkpointOG = torch.load(opt_generator_dir)
+            optimG.load_state_dict(checkpointOG)
+
+        if os.path.isfile(opt_discriminator_dir):
+            logging.info('resuming training of opt_discriminator')
+            checkpointOD = torch.load(opt_discriminator_dir)
+            optimD.load_state_dict(checkpointOD)
+
     lossG = GeneratorLoss()
     lossRecon = L1ReconLoss()
     lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
     lossVGG = VGGLoss()
 
+    metrics = TrainingMetrics(args.screenshot_step, dataloader)
+
     params_g = sum([ p.numel() for p in netG.parameters() ])
     params_d = sum([ p.numel() for p in netD.parameters() ])
 
-    print(f'Generator: {params_g} params\n' + \
-          f'Discriminator: {params_d} params')
-    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader)
+    logging.info(f'Generator: {params_g} params')
+    logging.info(f'Discriminator: {params_d} params')
+    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader, metrics)
 
     torch.save(netG.state_dict(), 'models/generator.pt')
     torch.save(netD.state_dict(), 'models/discriminator.pt')
