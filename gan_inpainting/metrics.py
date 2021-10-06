@@ -61,7 +61,9 @@ class TrainingMetrics:
                 print(f"[{self.iter}]\t" + \
                     f"accuracy_d: {self.accuracy[-1]},")
 
-                fig, axs = plt.subplots(len(self.losses.items()), 1)
+                fig, axs = plt.subplots(1, 1)
+
+                axs.set_xlabel('iterations')
 
                 for i,key in enumerate(self.losses):
                     name = key
@@ -70,12 +72,12 @@ class TrainingMetrics:
                     print(f"{name}: {value[-1]},")
 
                     # loss i-th
-                    axs[i].plot(x_axis, value)
-                    axs[i].set_xlabel('iterations')
-                    axs[i].set_ylabel(name)
+                    axs.plot(x_axis, value, label = name)
 
+                axs.plot(x_axis, self.accuracy, label = "accuracy discr")
+                lgd = axs.legend(bbox_to_anchor = (0.3, 1.3), loc="upper center", ncol=((len(self.losses)+1)//2))
                 fig.tight_layout()
-                fig.savefig(f'plots/loss_{self.iter}.png', dpi=fig.dpi)
+                fig.savefig(f'plots/loss.png', dpi=fig.dpi, bbox_extra_artists=(lgd,), bbox_inches='tight')
                 plt.close(fig)
 
             # save video frames x10 more frequently
