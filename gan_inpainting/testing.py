@@ -67,7 +67,7 @@ def test(netG, netD, dataloader):
             for d in range(output.size(0)):
                 save_image(output[d]/255, f'{config.output_dir}/{i*config.batch_size+d}.png')
 
-        fid_score = metrics_tester.FID(config.test_dir,f'{config.test_dir}/output',config.batch_size,device)
+        fid_score = metrics_tester.FID(config.test_dir,f'{config.output_dir}',config.batch_size,device)
         metrics_dict = metrics_tester.get_metrics()
         metrics_dict['FID'] = fid_score
         for key in metrics:
@@ -77,10 +77,10 @@ def test(netG, netD, dataloader):
 
 if __name__ == '__main__':
     config = Config('config.json')
-    logging.basicConfig(filename='test_output.log', encoding='utf-8', level=logging.INFO)
+    logging.basicConfig(filename='test_output.log', level=logging.INFO)
     logging.debug(config)
 
-    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
+    dataset = FaceMaskDataset(config.test_dir, 'maskceleba_test.csv', T.Resize(config.input_size))
     dataloader = dataset.loader(batch_size=config.batch_size)
 
     netG = MSSAGenerator(input_size=config.input_size).to(device)
