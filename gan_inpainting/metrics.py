@@ -18,7 +18,7 @@ class TrainingMetrics:
         self.losses = dict()
         self.accuracy = []
         self.dataloader = dataloader
-        self.img, self.mask = next(iter(dataloader))
+        self.fimg, self.fmask = next(iter(dataloader))
         self.ssim = []
         self.psnr = []
         self.lpips = []
@@ -57,7 +57,7 @@ class TrainingMetrics:
 
             # every 100 img, print losses, update the graph, output an image as example
             if self.iter % 100 == 0:
-                print(f"[{self.iter / 100}]\t" + \
+                print(f"[{self.iter}]\t" + \
                     f"accuracy_d: {self.accuracy[-1]},")
 
                 fig, axs = plt.subplots(len(self.losses.items()), 1)
@@ -77,25 +77,24 @@ class TrainingMetrics:
                 fig.savefig(f'plots/loss_{self.iter}.png', dpi=fig.dpi)
                 plt.close(fig)
 
-                img = self.img.to(device)
-                mask = self.mask.to(device)
+                fimg = self.fimg.to(device)
+                fmask = self.fmask.to(device)
 
                 # change img range from [0,255] to [-1,+1]
-                img = img / 127.5 - 1
+                fimg = fimg / 127.5 - 1
 
-                coarse_out, refined_out = netG(img, mask)
+                coarse_out, refined_out = netG(fimg, fmask)
 
-                coarse_imgs = coarse_out * mask + img * (1 - mask)
-                reconstructed_imgs = refined_out * mask + img * (1 - mask)
+                # coarse_fimg = coarse_out * fmask + fimg * (1 - fmask)
+                reconstructed_fimg = refined_out * fmask + fimg * (1 - fmask)
 
-                checkpoint_coarse = ((coarse_imgs[0] + 1) * 127.5)
-                checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
+                # checkpoint_img = ((img[0] + 1) * 127.5)
+                # checkpoint_fcoarse = ((coarse_fimg[0] + 1) * 127.5)
+                checkpoint_frecon = ((reconstructed_fimg[0] + 1) * 127.5)
 
-                checkpoint_img = ((img[0] + 1) * 127.5)
-
-                save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
-                save_image(checkpoint_recon / 255, f'plots/recon_{self.iter}.png')
-                save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
+                # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
+                # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
+                save_image(checkpoint_frecon / 255, f'plots/frame_{self.iter//100}.png')
             self.iter += 1
         return
 

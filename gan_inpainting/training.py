@@ -114,6 +114,13 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             # every 100 img, print losses, update the graph, output an image as
             # example
             if i % 100 == 0:
+                checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
+                checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
+
+                save_image(checkpoint_coarse / 255, f'plots/coarse_{i}.png')
+                save_image(checkpoint_recon / 255, f'plots/recon_{i}.png')
+
+                # save them in metrics.update()
                 torch.save(netG.state_dict(), 'models/generator.pt')
                 torch.save(netD.state_dict(), 'models/discriminator.pt')
             metrics.update(losses, pred_pos_neg_imgs, netG, netD)
