@@ -1,7 +1,3 @@
-import sys
-import torch
-import os
-import cv2
 import logging
 from config import Config
 from dataset import FaceMaskDataset
@@ -10,13 +6,15 @@ from torchvision import transforms as T
 from generator import *
 from discriminator import Discriminator
 from loss import *
-from pathlib import Path
+from metrics import TestMetrics
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def test(netG, netD, dataloader):
     netG.eval()
     netD.eval()
+
+    metrics_tester = TestMetrics()
 
     metrics = {
             'l1': [],
@@ -25,7 +23,6 @@ def test(netG, netD, dataloader):
 
     with torch.no_grad():
         for i, (imgs,masks) in enumerate(dataloader):
-            print(f'i:{i}')
             imgs = imgs.to(device)
             masks = masks.to(device)
 
@@ -59,21 +56,24 @@ def test(netG, netD, dataloader):
 
             output = (reconstructed_imgs + 1) * 127.5
 
-            print(output.shape)
+            metrics_tester.update(imgs, reconstructed_imgs)
             for d in range(output.size(0)):
-                print(f'd: {d}')
                 save_image(output[d]/255, f'{config.output_dir}/{i*config.batch_size+d}.png')
 
-    for key in metrics:
-        metrics[key] = torch.mean(torch.tensor(metrics[key])).item()
-    return metrics
+        fid_score = metrics_tester.FID(config.test_dir, config.output_dir, config.batch_size,device)
+        metrics_dict = metrics_tester.get_metrics()
+        metrics_dict['FID'] = fid_score
+        for key in metrics:
+            metrics_dict[key] = torch.mean(torch.tensor(metrics[key])).item()
+
+    return metrics_dict
 
 if __name__ == '__main__':
     config = Config('config.json')
-    logging.basicConfig(filename='test_output.log', encoding='utf-8', level=logging.INFO)
+    logging.basicConfig(filename='test_output.log', level=logging.INFO)
     logging.debug(config)
 
-    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
+    dataset = FaceMaskDataset(config.test_dir, 'maskceleba_test.csv', T.Resize(config.input_size))
     dataloader = dataset.loader(batch_size=config.batch_size)
 
     netG = MSSAGenerator(input_size=config.input_size).to(device)
