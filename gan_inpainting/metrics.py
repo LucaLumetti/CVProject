@@ -32,20 +32,20 @@ class TrainingMetrics:
             netD: Discriminator Net for testing
     '''
     def update(self, loss_list: dict , D_result, netG, netD):
-        if loss_list is None or len(loss_list.keys()) < 2:
-            raise Exception("losses must be at least two")
-
-        if not self.losses:
-            for name in loss_list.keys():
-                self.losses[name] = list()
-
-        for (name, value) in loss_list.items():
-            self.losses[name].append(value)
-
-        pred_pos_imgs, pred_neg_imgs = torch.chunk(D_result, 2, dim=0)
-
-        # canculate accuracy of D
         with torch.inference_mode():
+            if loss_list is None or len(loss_list.keys()) < 2:
+                raise Exception("losses must be at least two")
+
+            if not self.losses:
+                for name in loss_list.keys():
+                    self.losses[name] = list()
+
+            for (name, value) in loss_list.items():
+                self.losses[name].append(value)
+
+            pred_pos_imgs, pred_neg_imgs = torch.chunk(D_result, 2, dim=0)
+
+            # canculate accuracy of D
             mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
             mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
             mean_pos_pred = torch.where(mean_pos_pred > 0.5, 1, 0).type(torch.FloatTensor)
@@ -55,48 +55,49 @@ class TrainingMetrics:
             accuracyD /= tot_elem
             self.accuracy.append(accuracyD.item())
 
-        # every 100 img, print losses, update the graph, output an image as example
-        if self.iter % 100 == 0:
-            print(f"[{self.iter / 100}]\t" + \
-                  f"accuracy_d: {self.accuracy[-1]},")
+            # every 100 img, print losses, update the graph, output an image as example
+            if self.iter % 100 == 0:
+                print(f"[{self.iter / 100}]\t" + \
+                    f"accuracy_d: {self.accuracy[-1]},")
 
-            fig, axs = plt.subplots(len(self.losses.items()), 1)
+                fig, axs = plt.subplots(len(self.losses.items()), 1)
 
-            for i,key in enumerate(self.losses):
-                name = key
-                value = self.losses[key]
-                x_axis = range(len(self.losses[key]))
-                print(f"{name}: {value[-1]},")
+                for i,key in enumerate(self.losses):
+                    name = key
+                    value = self.losses[key]
+                    x_axis = range(len(self.losses[key]))
+                    print(f"{name}: {value[-1]},")
 
-                # loss i-th
-                axs[i].plot(x_axis, value)
-                axs[i].set_xlabel('iterations')
-                axs[i].set_ylabel(name)
+                    # loss i-th
+                    axs[i].plot(x_axis, value)
+                    axs[i].set_xlabel('iterations')
+                    axs[i].set_ylabel(name)
 
-            fig.tight_layout()
-            fig.savefig(f'plots/loss_{self.iter}.png', dpi=fig.dpi)
-            plt.close(fig)
+                fig.tight_layout()
+                fig.savefig(f'plots/loss_{self.iter}.png', dpi=fig.dpi)
+                plt.close(fig)
 
-            img = self.img.to(device)
-            mask = self.mask.to(device)
+                img = self.img.to(device)
+                mask = self.mask.to(device)
 
-            # change img range from [0,255] to [-1,+1]
-            img = img / 127.5 - 1
+                # change img range from [0,255] to [-1,+1]
+                img = img / 127.5 - 1
 
-            coarse_out, refined_out = netG(img, mask)
+                coarse_out, refined_out = netG(img, mask)
 
-            coarse_imgs = coarse_out * mask + img * (1 - mask)
-            reconstructed_imgs = refined_out * mask + img * (1 - mask)
+                coarse_imgs = coarse_out * mask + img * (1 - mask)
+                reconstructed_imgs = refined_out * mask + img * (1 - mask)
 
-            checkpoint_coarse = ((coarse_imgs[0] + 1) * 127.5)
-            checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
+                checkpoint_coarse = ((coarse_imgs[0] + 1) * 127.5)
+                checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
-            checkpoint_img = ((img[0] + 1) * 127.5)
+                checkpoint_img = ((img[0] + 1) * 127.5)
 
-            save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
-            save_image(checkpoint_recon / 255, f'plots/recon_{self.iter}.png')
-            save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
-        self.iter += 1
+                save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
+                save_image(checkpoint_recon / 255, f'plots/recon_{self.iter}.png')
+                save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
+            self.iter += 1
+        return
 
 class TestMetrics:
     def __init__(self):
