@@ -7,13 +7,15 @@ from torchvision.utils import save_image
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
 
-from pytorch_fid.fid_score import calculate_fid_given_paths
+from fid_score import calculate_fid_given_paths
 
 import lpips
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TrainingMetrics:
+
     def __init__(self, screenshot_step, dataloader):
         self.losses = dict()
         self.accuracy = []
@@ -59,7 +61,7 @@ class TrainingMetrics:
             # every screenshot_step img, print losses, update the graph, output an image as example
             if self.iter % self.screenshot_step == 0:
                 print(f"[{self.iter}]\t" + \
-                    f"accuracy_d: {self.accuracy[-1]},")
+                      f"accuracy_d: {self.accuracy[-1]},")
 
                 fig, axs = plt.subplots(1, 1)
 
@@ -99,11 +101,13 @@ class TrainingMetrics:
 
                 # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
                 # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
-                save_image(checkpoint_frecon / 255, f'plots/frame_{self.iter//(self.screenshot_step//10)}.png')
+                save_image(checkpoint_frecon/255, f'plots/frame_{self.iter//(self.screenshot_step//10)}.png')
             self.iter += 1
         return
 
+
 class TestMetrics:
+
     def __init__(self):
         self.ssim = []
         self.pnsr = []
@@ -127,7 +131,7 @@ class TestMetrics:
         return a dict with metrics
     '''
     def get_metrics(self):
-        return {"SSIM": np.mean(self.ssim), "PSNR": np.mean(self.pnsr), "LPIPS": np.mean(self.lpips)}
+        return dict({"SSIM": np.mean(self.ssim), "PSNR": np.mean(self.pnsr), "LPIPS": np.mean(self.lpips)})
 
     '''
         plot metrics and save it
@@ -167,6 +171,7 @@ class TestMetrics:
         --score         : a bigger score indicates better images
     '''
     def SSIM(self, original, generated):
+
         original = original.cpu()
         generated = generated.cpu()
 
@@ -215,7 +220,7 @@ class TestMetrics:
             return 100
         PIXEL_MAX = 255.0
         psnr = 20 * torch.log10(PIXEL_MAX / torch.sqrt(mse))
-        return psnr
+        return psnr.cpu().numpy()
 
     '''
         Calculate Fréchet Inception Distance (FID) from original's dataset and generate's dataset
@@ -226,11 +231,10 @@ class TestMetrics:
         --device        : it can be like cuda:0 or cpu, it's better if there is a GPU
         --dims          : we can use different layer of the inception network, default is 2048 like paper
         --num_worker    : num_worker fro operations
-
         return:
         --fid_score     : a lower score indicates better-quality images
     '''
-    def FID(self, data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_workers= 8):
+    def FID(self, data_orig, data_gen, batch_size = 50, device=None, dims=2048, num_workers= 2):
         if device is None:
             dev = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
         else:
@@ -244,6 +248,7 @@ class TestMetrics:
                                               dims)
         print('FID: ', fid_value)
         return fid_value
+
 
     '''
         calculate Perceptual similarity (LPIPS)
@@ -260,4 +265,4 @@ class TestMetrics:
 
         result = self.loss_alex(original, generated)
 
-        return result.mean()
+        return result.cpu().numpy().mean()

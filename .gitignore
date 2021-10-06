@@ -11,6 +11,5 @@ __pycache__
 pip-log.txt
 *.log
 .idea
-
 *.csv
 gan_inpainting/config.json
