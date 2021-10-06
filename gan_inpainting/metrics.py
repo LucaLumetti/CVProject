@@ -16,15 +16,16 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TrainingMetrics:
 
-    def __init__(self, dataloader):
+    def __init__(self, screenshot_step, dataloader):
         self.losses = dict()
         self.accuracy = []
         self.dataloader = dataloader
-        self.img, self.mask = next(iter(dataloader))
+        self.fimg, self.fmask = next(iter(dataloader))
         self.ssim = []
         self.psnr = []
         self.lpips = []
         self.iter = 0
+        self.screenshot_step = screenshot_step
 
     '''
         Parameters:
@@ -34,22 +35,20 @@ class TrainingMetrics:
             netD: Discriminator Net for testing
     '''
     def update(self, loss_list: dict , D_result, netG, netD):
-
-        if loss_list is None or len(loss_list.keys()) < 2:
-            raise Exception("losses must be at least two")
-        self.iter += 1
-
-        if not self.losses:
-            for name in loss_list.keys():
-                self.losses[name] = list()
-
-        for (name, value) in loss_list.items():
-            self.losses[name].append(value)
-
-        pred_pos_imgs, pred_neg_imgs = torch.chunk(D_result, 2, dim=0)
-
-        # canculate accuracy of D
         with torch.inference_mode():
+            if loss_list is None or len(loss_list.keys()) < 2:
+                raise Exception("losses must be at least two")
+
+            if not self.losses:
+                for name in loss_list.keys():
+                    self.losses[name] = list()
+
+            for (name, value) in loss_list.items():
+                self.losses[name].append(value)
+
+            pred_pos_imgs, pred_neg_imgs = torch.chunk(D_result, 2, dim=0)
+
+            # canculate accuracy of D
             mean_pos_pred = pred_pos_imgs.clone().detach().mean(dim=1)
             mean_neg_pred = pred_neg_imgs.clone().detach().mean(dim=1)
             mean_pos_pred = torch.where(mean_pos_pred > 0.5, 1, 0).type(torch.FloatTensor)
@@ -59,45 +58,50 @@ class TrainingMetrics:
             accuracyD /= tot_elem
             self.accuracy.append(accuracyD.item())
 
+            # every screenshot_step img, print losses, update the graph, output an image as example
+            if self.iter % self.screenshot_step == 0:
+                print(f"[{self.iter}]\t" + \
+                      f"accuracy_d: {self.accuracy[-1]},")
 
-        # every 100 img, print losses, update the graph, output an image as example
-        if self.iter % 20 == 0:
-            print(f"[{self.iter / 100}]\t" + \
-                  f"accuracy_d: {self.accuracy[-1]},")
+                fig, axs = plt.subplots(len(self.losses.items()), 1)
 
-            count = self.iter / 100
+                for i,key in enumerate(self.losses):
+                    name = key
+                    value = self.losses[key]
+                    x_axis = range(len(self.losses[key]))
+                    print(f"{name}: {value[-1]},")
 
-            fig, axs = plt.subplots(len(self.losses.items()), 1)
-            x_axis = range(self.iter)
+                    # loss i-th
+                    axs[i].plot(x_axis, value)
+                    axs[i].set_xlabel('iterations')
+                    axs[i].set_ylabel(name)
 
-            for i,key in enumerate(self.losses):
-                name = key
-                value = self.losses[key]
-                print(f"{name}: {value[-1]},")
+                fig.tight_layout()
+                fig.savefig(f'plots/loss_{self.iter}.png', dpi=fig.dpi)
+                plt.close(fig)
 
-                # loss i-th
-                axs[i].plot(x_axis, value)
-                axs[i].set_xlabel('iterations')
-                axs[i].set_ylabel(name)
+            # save video frames x10 more frequently
+            if self.iter % (self.screenshot_step//10) == 0:
+                fimg = self.fimg.to(device)
+                fmask = self.fmask.to(device)
 
-            fig.tight_layout()
-            fig.savefig(f'plots/loss_{count}.png', dpi=fig.dpi)
-            plt.close(fig)
+                # change img range from [0,255] to [-1,+1]
+                fimg = fimg / 127.5 - 1
 
+                coarse_out, refined_out = netG(fimg, fmask)
 
-            img = self.img.to(device)
-            mask = self.mask.to(device)
+                # coarse_fimg = coarse_out * fmask + fimg * (1 - fmask)
+                reconstructed_fimg = refined_out * fmask + fimg * (1 - fmask)
 
-            # change img range from [0,255] to [-1,+1]
-            img = img / 127.5 - 1
+                # checkpoint_img = ((img[0] + 1) * 127.5)
+                # checkpoint_fcoarse = ((coarse_fimg[0] + 1) * 127.5)
+                checkpoint_frecon = ((reconstructed_fimg[0] + 1) * 127.5)
 
-            coarse_out, refined_out = netG(img, mask)
-            reconstructed_imgs = refined_out * mask + img * (1 - mask)
-            checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
-            checkpoint_img = ((img[0] + 1) * 127.5)
-
-            save_image(checkpoint_recon / 255, f'plots/recon{count}.png')
-            save_image(checkpoint_img / 255, f'plots/orig{count}.png')
+                # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
+                # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
+                save_image(checkpoint_frecon/255, f'plots/frame_{self.iter//(self.screenshot_step//10)}.png')
+            self.iter += 1
+        return
 
 
 class TestMetrics:
@@ -162,7 +166,7 @@ class TestMetrics:
         --original      : orignal image
         --generate      : generator output
         return:
-        --score         : a bigger score indicates better images 
+        --score         : a bigger score indicates better images
     '''
     def SSIM(self, original, generated):
 
@@ -201,7 +205,7 @@ class TestMetrics:
 
 
     '''
-        Calculate the Peak Signal to Noise Ratio (PSNR) 
+        Calculate the Peak Signal to Noise Ratio (PSNR)
         Params:
         --original      : orignal image
         --generate      : generator output
@@ -225,7 +229,6 @@ class TestMetrics:
         --device        : it can be like cuda:0 or cpu, it's better if there is a GPU
         --dims          : we can use different layer of the inception network, default is 2048 like paper
         --num_worker    : num_worker fro operations
-        
         return:
         --fid_score     : a lower score indicates better-quality images
     '''
