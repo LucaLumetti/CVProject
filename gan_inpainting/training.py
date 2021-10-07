@@ -46,7 +46,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             }
 
     for ep in range(config.epoch):
-        for i, (imgs, masks) in enumerate(dataloader): #[batch_size, channel, W, H]
+        for i, (imgs, masks) in enumerate(dataloader):
             netG.zero_grad()
             netD.zero_grad()
             optimG.zero_grad()
@@ -100,7 +100,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             loss_perc, loss_style = lossVGG(imgs, refined_out)
             loss_perc *= 0.05
             loss_style *= 40
-            loss_gen_recon = loss_generator + loss_recon + loss_tv + loss_perc + loss_style
+            loss_gen_recon = loss_generator + loss_recon + \
+                    loss_tv + loss_perc + loss_style
 
             losses['g'] = loss_generator.item()
             losses['r'] = loss_recon.item()
@@ -121,10 +122,10 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
                 save_image(checkpoint_recon / 255, f'plots/recon_{i}.png')
 
                 # maybe save them in metrics.update()
-                torch.save(netG.state_dict(), config.checkpoint_dir + '/generator.pt')
-                torch.save(netD.state_dict(), config.checkpoint_dir + '/discriminator.pt')
-                torch.save(optimG.state_dict(), config.checkpoint_dir + '/opt_generator.pt')
-                torch.save(optimD.state_dict(), config.checkpoint_dir + '/opt_discriminator.pt')
+                torch.save(netG.state_dict(), f'{config.checkpoint_dir}/generator.pt')
+                torch.save(netD.state_dict(), f'{config.checkpoint_dir}/discriminator.pt')
+                torch.save(optimG.state_dict(), f'{config.checkpoint_dir}/opt_generator.pt')
+                torch.save(optimD.state_dict(), f'{config.checkpoint_dir}/opt_discriminator.pt')
             metrics.update(losses, pred_pos_neg_imgs, netG, netD)
     return
 
@@ -145,7 +146,12 @@ if __name__ == '__main__':
     config = Config(args.config)
     logging.debug(config)
 
-    dataset = FaceMaskDataset(config.dataset_dir, 'maskffhq.csv', T.Resize(config.input_size))
+    dataset = FaceMaskDataset(
+            config.dataset_dir,
+            'maskffhq.csv',
+            T.Resize(config.input_size)
+        )
+
     dataloader = dataset.loader(batch_size=config.batch_size, shuffle=True)
 
     netG = MSSAGenerator(input_size=config.input_size).to(device)
@@ -194,14 +200,19 @@ if __name__ == '__main__':
     lossD = DiscriminatorHingeLoss()
     lossVGG = VGGLoss()
 
-    metrics = TrainingMetrics(args.screenshot_step, dataloader)
+    metrics = TrainingMetrics(
+            args.screenshot_step,
+            config.video_dir,
+            dataset.loader(batch_size=1, shuffle=False)
+        )
 
     params_g = sum([ p.numel() for p in netG.parameters() ])
     params_d = sum([ p.numel() for p in netD.parameters() ])
 
     logging.info(f'Generator: {params_g} params')
     logging.info(f'Discriminator: {params_d} params')
-    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader, metrics)
+    train(netG, netD, optimG, optimD, lossG, lossD, lossRecon,
+            lossTV, lossVGG, dataloader, metrics)
 
     torch.save(netG.state_dict(), 'models/generator.pt')
     torch.save(netD.state_dict(), 'models/discriminator.pt')

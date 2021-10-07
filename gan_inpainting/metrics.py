@@ -16,16 +16,17 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TrainingMetrics:
 
-    def __init__(self, screenshot_step, dataloader):
+    def __init__(self, screenshot_step, video_dir, dataloader):
         self.losses = dict()
         self.accuracy = []
         self.dataloader = dataloader
-        self.fimg, self.fmask = next(iter(dataloader))
+        self.fimg, self.fmask = dataloader.__getitem__(0)
         self.ssim = []
         self.psnr = []
         self.lpips = []
         self.iter = 0
         self.screenshot_step = screenshot_step
+        self.video_dir = video_dir
 
     '''
         Parameters:
@@ -99,7 +100,7 @@ class TrainingMetrics:
 
                 # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
                 # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
-                save_image(checkpoint_frecon/255, f'plots/frame_{self.iter//(self.screenshot_step//10)}.png')
+                save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//(self.screenshot_step//10)}.png')
             self.iter += 1
         return
 
