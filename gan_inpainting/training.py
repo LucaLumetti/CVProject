@@ -203,7 +203,7 @@ if __name__ == '__main__':
     metrics = TrainingMetrics(
             args.screenshot_step,
             config.video_dir,
-            dataset.loader(batch_size=1, shuffle=False)
+            dataset
         )
 
     params_g = sum([ p.numel() for p in netG.parameters() ])

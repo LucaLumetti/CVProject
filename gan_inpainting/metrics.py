@@ -16,11 +16,11 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TrainingMetrics:
 
-    def __init__(self, screenshot_step, video_dir, dataloader):
+    def __init__(self, screenshot_step, video_dir, dataset):
         self.losses = dict()
         self.accuracy = []
-        self.dataloader = dataloader
-        self.fimg, self.fmask = dataloader.__getitem__(0)
+        self.dataset = dataset
+        self.fimg, self.fmask = dataset.__getitem__(0)
         self.ssim = []
         self.psnr = []
         self.lpips = []
