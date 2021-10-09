@@ -1,0 +1,16 @@
+\begin{thebibliography}{1}\itemsep=-1pt
+
+\bibitem{li2020deepgin}
+Chu-Tak Li, Wan-Chi Siu, Zhi-Song Liu, Li-Wen Wang, and Daniel Pak-Kong Lun.
+\newblock Deepgin: Deep generative inpainting network for extreme image
+  inpainting.
+\newblock In {\em European Conference on Computer Vision}, pages 5--22.
+  Springer, 2020.
+
+\bibitem{yu2019free}
+Jiahui Yu, Zhe Lin, Jimei Yang, Xiaohui Shen, Xin Lu, and Thomas~S Huang.
+\newblock Free-form image inpainting with gated convolution.
+\newblock In {\em Proceedings of the IEEE/CVF International Conference on
+  Computer Vision}, pages 4471--4480, 2019.
+
+\end{thebibliography}
