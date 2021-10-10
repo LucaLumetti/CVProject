@@ -9,6 +9,7 @@ src/gan_inpainting/config.json
 src/gan_inpainting/video_frames
 src/dataset
 src/__pycache__
+src/gan_inpainting/list.txt
 pip-log.txt
 *.log
 .idea

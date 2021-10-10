@@ -1,2 +1,3 @@
-file '/home/luca/university/cv/project/gan_inpainting/out_1.mp4'
-file '/home/luca/university/cv/project/gan_inpainting/out_2.mp4'
+file '/home/luca/university/cv/project/src/gan_inpainting/out_1.mp4'
+file '/home/luca/university/cv/project/src/gan_inpainting/out_2.mp4'
+file '/home/luca/university/cv/project/src/gan_inpainting/out_3.mp4'
