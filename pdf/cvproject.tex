@@ -62,6 +62,29 @@ Matteo Di Bartolomeo\\
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
+\section{Mask Segmentation}
+We made use of MediaPipe's FaceMesh \cite{DBLP:journals/corr/abs-1907-06724}
+library to find facial landmarks over the face covered with the surgical mask
+and the reference photo. Facial landmarks are important to have an initial
+approximation of the region where to search the surgical mask and to warp the
+reference photo over the first one. To perform the segmentation of the mask we
+apply a k-means with k=3 over the polygon we created using face landmarks and
+pick the bigger region between the 3.  The k has been choosen to be 3 as in the
+polygonal region we expect to find the mask, the background and the skin of the
+person's face. In the end, a binary image is created, with a 1 where the mask is
+present and 0 elsewhere, while in the original image, the mask area is filled
+with 0s.
+
+\section{Warping the reference photo}
+The objective of the reference photo is to guide the network to a more loyal
+reconstruction. As we allow the reference to have [avere un'angolazione diversa
+da quella frontale], we apply a thin-plate spline transformation to make it frontal
+[meh che traduzione brutta]. We use 30 specific landmarks as parameters as using
+more parameters lead to distortion given by the error in the landmarks detection
+and less lead to an imperfect warping. The same polygon region of Mask
+Segmentation is cut from the reference photo, the by applying the TPS is sticked
+to to main photo leading to a (partial) reconstruction.
+
 \section{Image inpainting}
 
 Image inpainting (a.k.a. image completion) is the task to fill a missing region
@@ -71,7 +94,7 @@ realistic image which is semantically close to the original one.
 \subsection{Datasets}
 GAN networks are data-hungry and needs a lot of diverse training examples in
 order to generate quality images, for this reason we used the FFHQ 1024x1024
-images, rescaled to 256x256, during training.  In other GAN inpainting
+images \cite{karras2019style}, rescaled to 256x256, during training.  In other GAN inpainting
 architectures, the mask region to reconstruct is usually calcuated during the
 training in a randomized way.  We do not have this randomization process, so for
 each image of FFHQ we precalculated the face region where the mask is weared
@@ -83,7 +106,7 @@ Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
 %------------------------------------------------------------------------
 
 {\small
-\bibliographystyle{ieee_fullname}
+\bibliographystyle{plain}
 \bibliography{cvproject}
 }
 
