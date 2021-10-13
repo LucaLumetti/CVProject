@@ -89,7 +89,28 @@ to to main photo leading to a (partial) reconstruction.
 
 Image inpainting (a.k.a. image completion) is the task to fill a missing region
 in an image by predicting the value of the missing pixels in order to have a
-realistic image which is semantically close to the original one.
+realistic image which is semantically close to the original one and visually correct.
+There are two different approches to achieve this task:
+\begin{enumerate}
+	\item
+	Low-level feature patch-matching which does not work pretty well with non-stationary use-cases (e.g. faces, objects or complicate scenes);
+	\item
+	Feed-forward models with deep convolutional networks which overcome the problem of prevoious case exploiting semantics learned on large scale dataset.
+\end{enumerate}
+
+We decided to follow the latter one designing a coarse-to-fine Generative Adversarial Network (GAN) characterized by:
+\begin{itemize}
+	\item
+	Generator:
+	\begin{itemize}
+		\item 
+		Coarse network whose aim is the one to provide a rough estimation of missing pixels;
+		\item
+		Refinement network which takes the output of the previous network as input and takes care of its detailed decoration.
+	\end{itemize}
+	\item
+	Discriminator which is responsible of distinguishing real samples from the one created by the generator.
+\end{itemize}
 %-------------------------------------------------------------------------
 \subsection{Datasets}
 GAN networks are data-hungry and needs a lot of diverse training examples in
@@ -101,10 +122,10 @@ each image of FFHQ we precalculated the face region where the mask is weared
 using facial landmarks.  For testing we used CelebA256.
 
 \subsection{Architecture}
-Our architecture is higly inspired by Free Form Image Inpainting with Gated
-Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}. Like this two papers also us use a coarse to refine techniques.
-For this reason, our generator is composed of two different nets: a coarse net that fill the masked part with a rough image and a refine net that gets better the output image.
+Our architecture is highly inspired by Free Form Image Inpainting with Gated
+Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
 \subsubsection{Coarse Net}
+In this stage we decided to use the gated convolution so that the generator is able to learn a dynamic feature selection mechanism for each channel and for each spatial location. The feature selection mechanism takes into account not only the background and the mask given in input, but also the semantic segmentation in some channels.
 \subsubsection{Refine Net} 
 %------------------------------------------------------------------------
 
