@@ -102,7 +102,10 @@ using facial landmarks.  For testing we used CelebA256.
 
 \subsection{Architecture}
 Our architecture is higly inspired by Free Form Image Inpainting with Gated
-Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
+Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}. Like this two papers also us use a coarse to refine techniques.
+For this reason, our generator is composed of two different nets: a coarse net that fill the masked part with a rough image and a refine net that gets better the output image.
+\subsubsection{Coarse Net}
+\subsubsection{Refine Net} 
 %------------------------------------------------------------------------
 
 {\small
