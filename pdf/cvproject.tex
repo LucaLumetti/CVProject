@@ -97,7 +97,7 @@
 		\item
 		Feed-forward models with deep convolutional networks which overcome the problem of prevoious case exploiting semantics learned on large scale dataset.
 	\end{enumerate}
-	
+	\section{Our approach}
 	We decided to follow the latter one designing a coarse-to-fine Generative Adversarial Network (GAN) characterized by:
 	\begin{itemize}
 		\item
@@ -111,7 +111,13 @@
 		\item
 		Discriminator which is responsible of distinguishing real samples from the one created by the generator.
 	\end{itemize}
+	The input of the network is a preprocessed RGB image so that its values are in range \([-1,+1]\).
+	We provided different methods to initialize the strating values of the network weights, such as normal, Xavier, orthogonal and, the default one, Kaiming.
+	\\
+	We went for Adam as the generator and discriminator optimizer, using different learning rates, respectively \textbf{[Inserire learning rate generatore]} and \textbf{[Inserire learning rate discriminatore]}.
 	%-------------------------------------------------------------------------
+	\subsection{Network learning}
+	PARTE DELLE LOSS
 	\subsection{Datasets}
 	GAN networks are data-hungry and needs a lot of diverse training examples in
 	order to generate quality images, for this reason we used the FFHQ 1024x1024
@@ -122,9 +128,11 @@
 	using facial landmarks.  For testing we used CelebA256.
 	
 	\subsection{Architecture}
-	Our architecture is highly inspired by Free Form Image Inpainting with Gated
-	Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
-	\subsubsection{Coarse Net}
+	Our architecture is highly inspired by Free Form Image Inpainting with Gated Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
+	Our net is composed of two generators: Coarse Network and Refine Network.
+	Both using Spatial Pyramid Dilation(SPD) that is a modified version of ResNet block. This layer is composed of different convolutional blocks with different dilation, and the output of these blocks is concatenated together.
+	
+	\subsubsection{Coarse Network}
 	In this stage we decided to use the gated convolution so that the generator is able to learn a dynamic feature selection mechanism for each channel and for each spatial location. The feature selection mechanism takes into account not only the background and the mask given in input, but also the semantic segmentation in some channels.
 	Furthermore using gated convolutive layers we can avoid the inner drawbacks of vanilla and partial convolution. In fact taking a look to the vanilla convolution formula:
 	\begin{equation}
@@ -162,8 +170,14 @@
 	As said before the benefits of using this operation is that the network is able to learn a mechanism to select feature dynamically for each channel and each spatial location considering also the semantic segmentation in some channels.
 	\\
 	As shown in \textbf{[Inserire riferimento alla figura]} the coarse net is charaterized by an initial downsampling phase, followed by a convolutional one and at the end there is and upsampling phase using the dilated gated convolution that could be seen as a gated convolution operation preceded by a resize operation. The output of the coarse net will pass through an activation function (we chose a \(\tanh\)) and the result will be given as input to the refinement network.
-	\subsubsection{Refine Net}
-	In this stage there are
+	\subsubsection{Refine Network}
+	The second generator take the output of the coarse net and the mask and it's useful for refinement the image.
+	In this stage there are 4 ResNet blocks with different dilation and some gated convolutional layers. in this manner, we can reduce the dimensions of the input and take a bigger receptive field. Another useful feature that is implemented in this net is the Multi Scale Self Attention (MSSA). The MSSA using the self-similarity between different layers and it's helpful to have a better coherence in the final image. We are control the self-similarity with three different scale: 16x16, 32x32, 64x64.
+	
+	
+	\subsection{Results}
+	
+	
 	%------------------------------------------------------------------------
 	
 	{\small
