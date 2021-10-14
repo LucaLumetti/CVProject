@@ -114,10 +114,23 @@
 	The input of the network is a preprocessed RGB image so that its values are in range \([-1,+1]\).
 	We provided different methods to initialize the strating values of the network weights, such as normal, Xavier, orthogonal and, the default one, Kaiming.
 	\\
-	We went for Adam as the generator and discriminator optimizer, using different learning rates, respectively \textbf{[Inserire learning rate generatore]} and \textbf{[Inserire learning rate discriminatore]}.
+	We went for Adam as the generator and discriminator optimizer using a \(0.5\) momentum and different learning rates, respectively \(0.0001\) and \(0.0004\) for the first 10 epochs and then they will linearly decrease.
 	%-------------------------------------------------------------------------
 	\subsection{Network learning}
-	PARTE DELLE LOSS
+	Out function loss is the sum of five different loss fucntions:
+	\begin{equation}
+		\mathcal{L}_{tot} = \mathcal{L}_{gen} + \mathcal{L}_{recon} + \mathcal{L}_{tv} + \lambda_{perc} \cdot \mathcal{L}_{perc} + \lambda_{style} \cdot \mathcal{L}_{style}
+	\end{equation}
+	\textbf{Adversarial Loss.} It is the mean error calculated on the bad predictions of the discriminator
+	\\
+	\textbf{Reconstruction Loss.} It is the weighted sum of the outputs of the coarse and refinement networks, the calculated mask and the original input image.
+	\\
+	\textbf{Total variation (TV) Loss.} It is responsible of the regularization of the image to improve the smoothness of the output image.
+	\\
+	\textbf{Perceptual Loss.} It represents the L1-norm distance between high-level feature representations in 5 different convolutive layers. Its weight is set to \(0.05\).
+	\\
+	\textbf{Style Loss.}Using the same 5 levels of the previous loss, it is the sum of the distances of the auto-correlation matrixes between the output and the ground truth multiplied by a factor that depends on the size and number of the activation maps in those layers. Its weigth is set to \(40\).
+	\\
 	\subsection{Datasets}
 	GAN networks are data-hungry and needs a lot of diverse training examples in
 	order to generate quality images, for this reason we used the FFHQ 1024x1024
@@ -131,7 +144,11 @@
 	Our architecture is highly inspired by Free Form Image Inpainting with Gated Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
 	Our net is composed of two generators: Coarse Network and Refine Network.
 	Both using Spatial Pyramid Dilation(SPD) that is a modified version of ResNet block. This layer is composed of different convolutional blocks with different dilation, and the output of these blocks is concatenated together.
-	
+	\begin{figure}[t]
+		\includegraphics[width=1\linewidth]{img/ResNetSPD.png}
+		\label{fig:long}
+		\label{fig:onecol}
+	\end{figure}
 	\subsubsection{Coarse Network}
 	In this stage we decided to use the gated convolution so that the generator is able to learn a dynamic feature selection mechanism for each channel and for each spatial location. The feature selection mechanism takes into account not only the background and the mask given in input, but also the semantic segmentation in some channels.
 	Furthermore using gated convolutive layers we can avoid the inner drawbacks of vanilla and partial convolution. In fact taking a look to the vanilla convolution formula:
@@ -176,7 +193,7 @@
 	
 	
 	\subsection{Results}
-	
+	PARTE METRICHE
 	
 	%------------------------------------------------------------------------
 	
