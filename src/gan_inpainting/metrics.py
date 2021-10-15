@@ -27,6 +27,7 @@ class TrainingMetrics:
         self.iter = 0
         self.screenshot_step = screenshot_step
         self.video_dir = video_dir
+        self.save_video = True
 
     '''
         Parameters:
@@ -84,7 +85,7 @@ class TrainingMetrics:
                 plt.close(fig)
 
             # save video frames x10 more frequently
-            if self.iter % (self.screenshot_step//10) == 0:
+            if self.save_video and self.iter % 5 == 0:
                 fimg = self.fimg.to(device)
                 fmask = self.fmask.to(device)
 
@@ -102,7 +103,7 @@ class TrainingMetrics:
 
                 # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
                 # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
-                save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//(self.screenshot_step//10)}.png')
+                save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//5}.png')
             self.iter += 1
         return
 
