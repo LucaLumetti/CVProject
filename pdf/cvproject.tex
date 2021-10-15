@@ -1,0 +1,90 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{cvpr}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Include other packages here, before hyperref.
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+\usepackage[breaklinks=true,bookmarks=false]{hyperref}
+
+\cvprfinalcopy % *** Uncomment this line for the final submission
+
+\def\cvprPaperID{****} % *** Enter the CVPR Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+% Pages are numbered in submission mode, and unnumbered in camera-ready
+%\ifcvprfinal\pagestyle{empty}\fi
+% \setcounter{page}{4321}
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{Mask inpainting with a GAN network}
+
+\author{Luca Lumetti\\
+{\tt\small 244577@studenti.unimore.it}
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+\and
+Federico Silvestri\\
+{\tt\small 243938@studenti.unimore.it}
+\and
+Matteo Di Bartolomeo\\
+{\tt\small 241469@studenti.unimore.it}
+}
+
+\maketitle
+%\thispagestyle{empty}
+
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+  Our project aims to remove a face mask over a person’s face, by reconstructing
+  the covered part of the face. To have a more precise reconstruction of the
+  missing parts (mouth and nose) behind the mask, we plan to use a second photo
+  of the same person without the mask as a reference during the facial
+  reconstruction process. There are no constraints on the quality of the
+  reference photo, for instance the face can be taken from a different point of
+  view than the first one. To sum up, given as input an image containing a
+  person’s face partially covered by a medical mask and another photo of the
+  same person without any occlusions, the output will be the first image with
+  the mask-covered parts, mouth and nose, reconstructed. Future development
+  could lead to generalizing the occlusion caused by the mask to any type of
+  occlusion possible.
+\end{abstract}
+
+%%%%%%%%% BODY TEXT
+\section{Image inpainting}
+
+Image inpainting (a.k.a. image completion) is the task to fill a missing region
+in an image by predicting the value of the missing pixels in order to have a
+realistic image which is semantically close to the original one.
+%-------------------------------------------------------------------------
+\subsection{Datasets}
+GAN networks are data-hungry and needs a lot of diverse training examples in
+order to generate quality images, for this reason we used the FFHQ 1024x1024
+images, rescaled to 256x256, during training.  In other GAN inpainting
+architectures, the mask region to reconstruct is usually calcuated during the
+training in a randomized way.  We do not have this randomization process, so for
+each image of FFHQ we precalculated the face region where the mask is weared
+using facial landmarks.  For testing we used CelebA256.
+
+\subsection{Architecture}
+Our architecture is higly inspired by Free Form Image Inpainting with Gated
+Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
+%------------------------------------------------------------------------
+
+{\small
+\bibliographystyle{ieee_fullname}
+\bibliography{cvproject}
+}
+
+\end{document}
