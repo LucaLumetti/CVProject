@@ -39,6 +39,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             'tv': [],
             'perc': [],
             'style': [],
+            'contra': []
             }
 
     accuracies = {
