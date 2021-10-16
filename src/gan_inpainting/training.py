@@ -28,7 +28,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
 # also a logger would be nice
-def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, dataloader, metrics):
+def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, lossContra, dataloader, metrics):
     netG.train()
     netD.train()
 
@@ -64,7 +64,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             masks = masks / 1.
 
             # forward G
-            coarse_out, refined_out = netG(imgs, masks)
+            emb_repr, coarse_out, refined_out = netG(imgs, masks)
             reconstructed_coarses = coarse_out*masks + imgs*(1-masks)
             reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
@@ -100,14 +100,16 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             loss_perc, loss_style = lossVGG(imgs, refined_out)
             loss_perc *= 0.05
             loss_style *= 40
+            loss_contra = lossContra(emb_repr)
             loss_gen_recon = loss_generator + loss_recon + \
-                    loss_tv + loss_perc + loss_style
+                    loss_tv + loss_perc + loss_style + loss_contra
 
             losses['g'] = loss_generator.item()
             losses['r'] = loss_recon.item()
             losses['tv'] = loss_tv.item()
             losses['perc'] = loss_perc.item()
             losses['style'] = loss_style.item()
+            losses['contra'] = loss_contra.item()
 
             loss_gen_recon.backward()
 
@@ -199,6 +201,7 @@ if __name__ == '__main__':
     lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
     lossVGG = VGGLoss()
+    lossContra = ContrasiveLoss()
 
     metrics = TrainingMetrics(
             args.screenshot_step,
@@ -212,7 +215,7 @@ if __name__ == '__main__':
     logging.info(f'Generator: {params_g} params')
     logging.info(f'Discriminator: {params_d} params')
     train(netG, netD, optimG, optimD, lossG, lossD, lossRecon,
-            lossTV, lossVGG, dataloader, metrics)
+            lossTV, lossVGG, lossContra, dataloader, metrics)
 
     torch.save(netG.state_dict(), 'models/generator.pt')
     torch.save(netD.state_dict(), 'models/discriminator.pt')
