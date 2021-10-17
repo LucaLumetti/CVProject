@@ -11,6 +11,7 @@ from torchvision import transforms as T
 from torchvision.utils import save_image
 import torch.nn.functional as F
 import torch.nn as nn
+from torch.utils.data import ConcatDataset, DataLoader
 
 import matplotlib.pyplot as plt
 
@@ -47,7 +48,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             }
 
     for ep in range(config.epoch):
-        for i, (imgs, masks) in enumerate(dataloader):
+        for i, (imgs, masks, aug_imgs, aug_masks) in enumerate(dataloader):
             netG.zero_grad()
             netD.zero_grad()
             optimG.zero_grad()
@@ -57,6 +58,8 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             lossTV.zero_grad()
             lossVGG.zero_grad()
 
+            imgs = torch.cat([imgs, aug_imgs], dim=0)
+            masks = torch.cat([masks, aug_masks], dim=0)
             imgs = imgs.to(device)
             masks = masks.to(device)
 
@@ -152,10 +155,15 @@ if __name__ == '__main__':
     dataset = FaceMaskDataset(
             config.dataset_dir,
             'maskffhq.csv',
-            T.Resize(config.input_size)
+            T.Resize(config.input_size),
+            T.Compose([
+                T.ToPILImage(),
+                T.RandomHorizontalFlip(p=1.0),
+                T.ToTensor(),
+            ])
         )
 
-    dataloader = dataset.loader(batch_size=config.batch_size, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=config.batch_size, shuffle=False)
 
     netG = MSSAGenerator(input_size=config.input_size).to(device)
     netD = Discriminator(input_size=config.input_size).to(device)
@@ -202,7 +210,7 @@ if __name__ == '__main__':
     lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
     lossVGG = VGGLoss()
-    lossContra = ContrasiveLoss()
+    lossContra = ContrastiveLoss()
 
     metrics = TrainingMetrics(
             args.screenshot_step,

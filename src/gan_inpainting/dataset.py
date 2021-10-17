@@ -5,6 +5,7 @@ import cv2
 
 import torch
 import torch.nn.functional as F
+from torchvision import transforms as T
 import torch.nn as nn
 from torchvision.io import read_image
 from torchvision.utils import save_image
@@ -25,11 +26,12 @@ class FakeDataset(Dataset):
         return DataLoader(self, **args)
 
 class FaceMaskDataset(Dataset):
-    def __init__(self, dataset_dir, csv_file, transf=None):
+    def __init__(self, dataset_dir, csv_file, transf, aug_t):
         self.dataset_dir = dataset_dir
         self.images = pd.read_csv(f'{dataset_dir}/{csv_file}', dtype='str')
         self.dataset_len = len(self.images)
         self.transf = transf if transf is not None else lambda x: x
+        self.aug_t = aug_t
 
     def __len__(self):
         return self.dataset_len
@@ -47,8 +49,10 @@ class FaceMaskDataset(Dataset):
 
         img = self.transf(img)
         mask = self.transf(mask)
+        aug_img = self.aug_t(img)
+        aug_mask = self.aug_t(mask)
 
-        return img, mask
+        return img, mask, aug_img, aug_mask
 
     def loader(self, **args):
         return DataLoader(self, **args)

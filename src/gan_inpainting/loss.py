@@ -147,7 +147,7 @@ class VGGLoss(nn.Module):
         return loss, style_loss
 
 class ContrastiveLoss(nn.Module):
-    def __init__(self, temperature):
+    def __init__(self, temperature=0.07):
         super(ContrastiveLoss, self).__init__()
         self.similarity = nn.CosineSimilarity(dim=-1, eps=1e-8)
         self.temperature = temperature
@@ -156,10 +156,10 @@ class ContrastiveLoss(nn.Module):
     def forward(self, x):
         x1, x2 = x.split(2)
         # this can be improved, some cos_sim are repeated between num and den
-        num_sims = sim(x1, x2) \
+        num_sims = self.similarity(x1, x2) \
                     .div(self.temperature) \
                     .exp()
-        den_sims = sim(x1.unsqueeze(1), x2.unsqueeze(2)) \
+        den_sims = self.similarity(x1.unsqueeze(1), x2.unsqueeze(2)) \
                     .div(self.temperature) \
                     .exp() \
                     .sum(dim=0)
