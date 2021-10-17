@@ -154,6 +154,7 @@ class ContrastiveLoss(nn.Module):
 
     # [a1, b1, c1, d1, a2, b2, c2, d2]
     def forward(self, x):
+        x = torch.squeeze(x)
         x1, x2 = x.split(2)
         # this can be improved, some cos_sim are repeated between num and den
         num_sims = self.similarity(x1, x2) \
@@ -162,6 +163,8 @@ class ContrastiveLoss(nn.Module):
         den_sims = self.similarity(x1.unsqueeze(1), x2.unsqueeze(2)) \
                     .div(self.temperature) \
                     .exp() \
-                    .sum(dim=0)
-        return -torch.log(torch.div(num_sims, den_sims))
+                    .sum(dim=-1)
+        print(f'num: {num_sims.shape}')
+        print(f'den: {den_sims.shape}')
+        return torch.sum(-torch.log(torch.div(num_sims, den_sims)))
 
