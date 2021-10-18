@@ -146,28 +146,6 @@ class VGGLoss(nn.Module):
             style_loss += self.weights[i] * self.mse_loss(gm_x, gm_y.detach())
         return loss, style_loss
 
-class ContrastiveLoss(nn.Module):
-    def __init__(self, temperature=0.07):
-        super(ContrastiveLoss, self).__init__()
-        self.similarity = nn.CosineSimilarity(dim=-1, eps=1e-8)
-        self.temperature = temperature
-
-    # [a1, b1, c1, d1, a2, b2, c2, d2]
-    def forward(self, x):
-        x = torch.squeeze(x)
-        x1, x2 = x.chunk(2)
-        # this can be improved, some cos_sim are repeated between num and den
-        num_sims = self.similarity(x1, x2) \
-                    .div(self.temperature) \
-                    .exp()
-        den_sims = self.similarity(x1.unsqueeze(1), x2.unsqueeze(2)) \
-                    .div(self.temperature) \
-                    .exp() \
-                    .sum(dim=-1)
-        print(f'num: {num_sims.shape}')
-        print(f'den: {den_sims.shape}')
-        return torch.sum(-torch.log(torch.div(num_sims, den_sims)))
-
 class InfoNCE(nn.Module):
     """
     from: https://raw.githubusercontent.com/RElbers/info-nce-pytorch/main/info_nce/__init__.py
