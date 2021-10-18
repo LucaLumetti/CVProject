@@ -278,7 +278,7 @@ class MSSAGenerator(nn.Module):
         x = self.end(x) # 256x256x3
         # x = torch.tanh(x)
 
-        emb_repr = self.avgpool(emb_repr)
+        emb_repr = self.avgpool(emb_repr).squeeze()
         refine_result = x
 
         return emb_repr, coarse_result, refine_result

@@ -104,7 +104,7 @@ def train(netG, netD, optimG, optimD, lossG, lossD, lossRecon, lossTV, lossVGG, 
             loss_perc, loss_style = lossVGG(imgs, refined_out)
             loss_perc *= 0.05
             loss_style *= 40
-            loss_contra = lossContra(emb_repr)
+            loss_contra = lossContra(*emb_repr.chunk(2))
             loss_gen_recon = loss_generator + loss_recon + \
                     loss_tv + loss_perc + loss_style + loss_contra
 
@@ -210,7 +210,7 @@ if __name__ == '__main__':
     lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
     lossVGG = VGGLoss()
-    lossContra = ContrastiveLoss()
+    lossContra = InfoNCE()
 
     metrics = TrainingMetrics(
             args.screenshot_step,
