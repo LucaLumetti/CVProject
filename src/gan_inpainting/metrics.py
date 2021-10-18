@@ -20,7 +20,7 @@ class TrainingMetrics:
         self.losses = dict()
         self.accuracy = []
         self.dataset = dataset
-        self.fimg, self.fmask = dataset.__getitem__(0)
+        self.fimg, self.fmask, _, _ = dataset.__getitem__(0)
         self.ssim = []
         self.psnr = []
         self.lpips = []
@@ -92,7 +92,7 @@ class TrainingMetrics:
                 # change img range from [0,255] to [-1,+1]
                 fimg = fimg / 127.5 - 1
 
-                coarse_out, refined_out = netG(fimg[None,:,:], fmask[None,:,:])
+                _, coarse_out, refined_out = netG(fimg[None,:,:], fmask[None,:,:])
 
                 # coarse_fimg = coarse_out * fmask + fimg * (1 - fmask)
                 reconstructed_fimg = refined_out * fmask + fimg * (1 - fmask)
