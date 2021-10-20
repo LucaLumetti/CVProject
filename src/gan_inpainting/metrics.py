@@ -85,25 +85,25 @@ class TrainingMetrics:
                 plt.close(fig)
 
             # save video frames x10 more frequently
-            if self.save_video and self.iter % 5 == 0:
-                fimg = self.fimg.to(device)
-                fmask = self.fmask.to(device)
+            # if self.save_video and self.iter % 5 == 0:
+            #     fimg = self.fimg.to(device)
+            #     fmask = self.fmask.to(device)
 
-                # change img range from [0,255] to [-1,+1]
-                fimg = fimg / 127.5 - 1
+            #     # change img range from [0,255] to [-1,+1]
+            #     fimg = fimg / 127.5 - 1
 
-                _, coarse_out, refined_out = netG(fimg[None,:,:], fmask[None,:,:])
+            #     _, coarse_out, refined_out = netG(fimg[None,:,:], fmask[None,:,:])
 
-                # coarse_fimg = coarse_out * fmask + fimg * (1 - fmask)
-                reconstructed_fimg = refined_out * fmask + fimg * (1 - fmask)
+            #     # coarse_fimg = coarse_out * fmask + fimg * (1 - fmask)
+            #     reconstructed_fimg = refined_out * fmask + fimg * (1 - fmask)
 
-                # checkpoint_img = ((img[0] + 1) * 127.5)
-                # checkpoint_fcoarse = ((coarse_fimg[0] + 1) * 127.5)
-                checkpoint_frecon = ((reconstructed_fimg[0] + 1) * 127.5)
+            #     # checkpoint_img = ((img[0] + 1) * 127.5)
+            #     # checkpoint_fcoarse = ((coarse_fimg[0] + 1) * 127.5)
+            #     checkpoint_frecon = ((reconstructed_fimg[0] + 1) * 127.5)
 
-                # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
-                # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
-                save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//5}.png')
+            #     # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
+            #     # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
+            #     save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//5}.png')
             self.iter += 1
         return
 
