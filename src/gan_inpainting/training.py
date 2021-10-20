@@ -232,7 +232,8 @@ def train(gpu, args):
                 torch.save(netD.state_dict(), f'{args.checkpoint_dir}/discriminator.pt')
                 torch.save(optimG.state_dict(), f'{args.checkpoint_dir}/opt_generator.pt')
                 torch.save(optimD.state_dict(), f'{args.checkpoint_dir}/opt_discriminator.pt')
-            metrics.update(losses, pred_pos_neg_imgs, netG, netD)
+            if rank == 0:
+                metrics.update(losses, pred_pos_neg_imgs, netG, netD)
     return
 
 if __name__ == '__main__':
