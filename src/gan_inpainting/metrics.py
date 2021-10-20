@@ -16,7 +16,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TrainingMetrics:
 
-    def __init__(self, screenshot_step, video_dir, dataset):
+    def __init__(self, screenshot_step, video_dir, plots_dir, dataset):
         self.losses = dict()
         self.accuracy = []
         self.dataset = dataset
@@ -27,6 +27,7 @@ class TrainingMetrics:
         self.iter = 0
         self.screenshot_step = screenshot_step
         self.video_dir = video_dir
+        self.plots_dir = plots_dir
         self.save_video = True
 
     '''
@@ -81,7 +82,7 @@ class TrainingMetrics:
                 axs.plot(x_axis, self.accuracy, label = "accuracy discr")
                 lgd = axs.legend(bbox_to_anchor = (0.3, 1.3), loc="upper center", ncol=((len(self.losses)+1)//2))
                 fig.tight_layout()
-                fig.savefig(f'plots/loss.png', dpi=fig.dpi, bbox_extra_artists=(lgd,), bbox_inches='tight')
+                fig.savefig(f'{self.plots_dir}/plots/loss.png', dpi=fig.dpi, bbox_extra_artists=(lgd,), bbox_inches='tight')
                 plt.close(fig)
 
             # save video frames x10 more frequently
@@ -109,7 +110,6 @@ class TrainingMetrics:
 
 
 class TestMetrics:
-
     def __init__(self):
         self.ssim = []
         self.pnsr = []

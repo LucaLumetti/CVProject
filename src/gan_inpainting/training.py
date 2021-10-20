@@ -30,6 +30,7 @@ from metrics import TrainingMetrics
 # something or is doing completely random shit
 # also a logger would be nice
 def train(gpu, args):
+    logging.basicConfig(filename='output.log', level=logging.INFO)
     rank = args.nr * args.gpus + gpu
     dist.init_process_group(
         backend='nccl',
@@ -39,7 +40,7 @@ def train(gpu, args):
     )
     torch.manual_seed(0)
     torch.cuda.set_device(gpu)
-    logging.info(f'[p{rank}] joined the training on gpu#{gpu}')
+    logging.info(f'[p#{rank}] joined the training on gpu#{gpu}!')
 
     dataset = FaceMaskDataset(
             args.dataset_dir,
@@ -116,14 +117,17 @@ def train(gpu, args):
     lossRecon = L1ReconLoss()
     lossTV = TVLoss()
     lossD = DiscriminatorHingeLoss()
-    lossVGG = VGGLoss()
+    lossVGG = VGGLoss(gpu)
     lossContra = InfoNCE()
 
-    metrics = TrainingMetrics(
-            args.screenstep,
-            args.video_dir,
-            dataset
-        )
+    # only rank 0 update metrics
+    if(rank == 0):
+        metrics = TrainingMetrics(
+                args.screenstep,
+                args.video_dir,
+                args.plots_dir,
+                dataset
+            )
 
     netG.train()
     netD.train()
@@ -138,6 +142,7 @@ def train(gpu, args):
             'contra': []
             }
 
+    logging.info(f'[p#{rank}] {losses}')
     accuracies = {
             'd': []
             }
@@ -215,12 +220,12 @@ def train(gpu, args):
             optimG.step()
             # every 100 img, print losses, update the graph, output an image as
             # example
-            if i % metrics.screenshot_step == 0:
+            if rank == 0 and i % metrics.screenshot_step == 0:
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
-                save_image(checkpoint_coarse / 255, f'plots/coarse_{i}.png')
-                save_image(checkpoint_recon / 255, f'plots/recon_{i}.png')
+                save_image(checkpoint_coarse / 255, f'{args.plots_dir}/plots/coarse_{i}.png')
+                save_image(checkpoint_recon / 255, f'{args.plots_dir}/plots/recon_{i}.png')
 
                 # maybe save them in metrics.update()
                 torch.save(netG.state_dict(), f'{args.checkpoint_dir}/generator.pt')
@@ -244,13 +249,14 @@ if __name__ == '__main__':
     parser.add_argument("--learning_rate_d", default=0.0004, type=float, help="learning rate of the discriminator")
     parser.add_argument("--dataset_dir", type=str, help="dataset location", required=True)
     parser.add_argument("--checkpoint_dir", type=str, help="where to load/save checkpoints", required=True)
-    parser.add_argument("--video_dir", type=str, help="where to save the video")
+    parser.add_argument("--plots_dir", type=str, help="where to save the plots", required=True)
+    parser.add_argument("--video_dir", type=str, help="where to save the video", required=True)
     args = parser.parse_args()
 
     args.world_size = args.gpus*args.nodes
 
     logging.basicConfig(filename='output.log', level=logging.INFO)
+    logging.info(f'nr: {args.nr}, nodes: {args.nodes}, gpus: {args.gpus}')
 
-    print(f'spawning {args.world_size} processes')
+    logging.info(f'[p#0] starting {args.world_size} processes')
     mp.spawn(train, nprocs=args.gpus, args=(args,))
-    print('end training')
