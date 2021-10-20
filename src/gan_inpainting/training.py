@@ -142,7 +142,6 @@ def train(gpu, args):
             'contra': []
             }
 
-    logging.info(f'[p#{rank}] {losses}')
     accuracies = {
             'd': []
             }
@@ -215,12 +214,14 @@ def train(gpu, args):
             losses['style'] = loss_style.item()
             losses['contra'] = loss_contra.item()
 
+
             loss_gen_recon.backward()
 
             optimG.step()
             # every 100 img, print losses, update the graph, output an image as
             # example
             if rank == 0 and i % metrics.screenshot_step == 0:
+                logging.info(f'[p#{rank}] {losses}')
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
@@ -239,7 +240,7 @@ def train(gpu, args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Training")
     parser.add_argument("--checkpoint", default=False, help="resume training")
-    parser.add_argument("--screenstep", default=500, type=int, help="how often output metrics and imgs")
+    parser.add_argument("--screenstep", default=100, type=int, help="how often output metrics and imgs")
     parser.add_argument("--nodes", default=1, type=int, help="number of nodes")
     parser.add_argument("--gpus", default=1, type=int, help="number of gpus per node")
     parser.add_argument("--nr", default=0, type=int, help="ranking within the nodes")
