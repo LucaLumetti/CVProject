@@ -25,14 +25,13 @@ from dataset import FakeDataset, FaceMaskDataset
 
 from metrics import TrainingMetrics
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 # torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
 # also a logger would be nice
 def train(gpu, args):
     rank = args.nr * args.gpus + gpu
+    print(f'[p{rank}] joined the training')
     dist.init_process_group(
         backend='nccl',
         init_method='env://',
@@ -156,8 +155,8 @@ def train(gpu, args):
 
             imgs = torch.cat([imgs, aug_imgs], dim=0)
             masks = torch.cat([masks, aug_masks], dim=0)
-            imgs = imgs.to(device)
-            masks = masks.to(device)
+            imgs = imgs.cuda(gpu)
+            masks = masks.cuda(gpu)
 
             # change img range from [0,255] to [-1,+1]
             imgs = imgs / 127.5 - 1
@@ -252,4 +251,6 @@ if __name__ == '__main__':
 
     logging.basicConfig(filename='output.log', level=logging.INFO)
 
+    print(f'spawning {args.world_size} processes')
     mp.spawn(train, nprocs=args.gpus, args=(args,))
+    print('end training')
