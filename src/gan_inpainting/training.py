@@ -86,7 +86,7 @@ def train(gpu, args):
                 betas=(0.5, 0.999)
             )
     # Resume checkpoint if necessary
-    if args.checkpoint is not None:
+    if args.checkpoint is True:
         generator_dir = args.checkpoint_dir + '/generator.pt'
         discriminator_dir = args.checkpoint_dir + '/discriminator.pt'
         opt_generator_dir = args.checkpoint_dir + '/opt_generator.pt'
