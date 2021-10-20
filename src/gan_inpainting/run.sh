@@ -1,7 +1,7 @@
 #!/bin/sh
 #SBATCH --partition=students-prod
 #SBATCH --gres=gpu:2
-#SBATCH --job-name="contra-gin"
+#SBATCH --job-name="distr-contra-gin"
 #SBATCH --qos=cvcs_bprod
 
 export MASTER_ADDR=localhost
