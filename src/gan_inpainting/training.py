@@ -31,7 +31,6 @@ from metrics import TrainingMetrics
 # also a logger would be nice
 def train(gpu, args):
     rank = args.nr * args.gpus + gpu
-    print(f'[p{rank}] joined the training')
     dist.init_process_group(
         backend='nccl',
         init_method='env://',
@@ -40,6 +39,7 @@ def train(gpu, args):
     )
     torch.manual_seed(0)
     torch.cuda.set_device(gpu)
+    logging.info(f'[p{rank}] joined the training on gpu#{gpu}')
 
     dataset = FaceMaskDataset(
             args.dataset_dir,
