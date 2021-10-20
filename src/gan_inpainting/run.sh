@@ -9,7 +9,7 @@ export MASTER_PORT=3141
 
 python training.py \
   --dataset_dir="/nas/softechict-nas-1/llumetti/FFHQ_MASK_GAN"      \
-  --checpoint_dir="/nas/softechict-nas-1/llumetti/checkpoints/gin"  \
+  --checkpoint_dir="/nas/softechict-nas-1/llumetti/checkpoints/gin" \
   --video_dir="/nas/softechict-nas-1/llumetti/video_frames"         \
   --plots_dir="/homes/llumetti/CVProject2/src/gan_inpainting/plots" \
   --batch_size 4                                                    \
