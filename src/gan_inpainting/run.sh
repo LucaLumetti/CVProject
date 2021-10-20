@@ -1,3 +1,4 @@
+#!/bin/sh
 #SBATCH --partition=students-prod
 #SBATCH --gres=gpu:2
 #SBATCH --job-name="contra-gin"
