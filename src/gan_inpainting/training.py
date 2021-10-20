@@ -224,8 +224,8 @@ def train(gpu, args):
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
-                save_image(checkpoint_coarse / 255, f'{args.plots_dir}/plots/coarse_{i}.png')
-                save_image(checkpoint_recon / 255, f'{args.plots_dir}/plots/recon_{i}.png')
+                save_image(checkpoint_coarse / 255, f'{args.plots_dir}/coarse_{i}.png')
+                save_image(checkpoint_recon / 255, f'{args.plots_dir}/recon_{i}.png')
 
                 # maybe save them in metrics.update()
                 torch.save(netG.state_dict(), f'{args.checkpoint_dir}/generator.pt')

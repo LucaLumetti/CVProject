@@ -82,7 +82,7 @@ class TrainingMetrics:
                 axs.plot(x_axis, self.accuracy, label = "accuracy discr")
                 lgd = axs.legend(bbox_to_anchor = (0.3, 1.3), loc="upper center", ncol=((len(self.losses)+1)//2))
                 fig.tight_layout()
-                fig.savefig(f'{self.plots_dir}/plots/loss.png', dpi=fig.dpi, bbox_extra_artists=(lgd,), bbox_inches='tight')
+                fig.savefig(f'{self.plots_dir}/loss.png', dpi=fig.dpi, bbox_extra_artists=(lgd,), bbox_inches='tight')
                 plt.close(fig)
 
             # save video frames x10 more frequently
