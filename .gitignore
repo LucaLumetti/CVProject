@@ -11,6 +11,7 @@ src/dataset
 src/__pycache__
 src/gan_inpainting/list.txt
 pip-log.txt
+__pycache__
 *.log
 .idea
 *.csv

@@ -20,13 +20,14 @@ class TrainingMetrics:
         self.losses = dict()
         self.accuracy = []
         self.dataset = dataset
-        self.fimg, self.fmask = dataset.__getitem__(0)
+        self.fimg, self.fmask, _, _ = dataset.__getitem__(0)
         self.ssim = []
         self.psnr = []
         self.lpips = []
         self.iter = 0
         self.screenshot_step = screenshot_step
         self.video_dir = video_dir
+        self.save_video = True
 
     '''
         Parameters:
@@ -84,14 +85,14 @@ class TrainingMetrics:
                 plt.close(fig)
 
             # save video frames x10 more frequently
-            if self.iter % (self.screenshot_step//10) == 0:
+            if self.save_video and self.iter % 5 == 0:
                 fimg = self.fimg.to(device)
                 fmask = self.fmask.to(device)
 
                 # change img range from [0,255] to [-1,+1]
                 fimg = fimg / 127.5 - 1
 
-                coarse_out, refined_out = netG(fimg[None,:,:], fmask[None,:,:])
+                _, coarse_out, refined_out = netG(fimg[None,:,:], fmask[None,:,:])
 
                 # coarse_fimg = coarse_out * fmask + fimg * (1 - fmask)
                 reconstructed_fimg = refined_out * fmask + fimg * (1 - fmask)
@@ -102,7 +103,7 @@ class TrainingMetrics:
 
                 # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
                 # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
-                save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//(self.screenshot_step//10)}.png')
+                save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//5}.png')
             self.iter += 1
         return
 
