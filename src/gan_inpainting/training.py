@@ -100,22 +100,22 @@ def train(gpu, args):
         opt_discriminator_dir = f'{args.checkpoint_dir}/opt_discriminator.pt'
 
         if os.path.isfile(generator_dir):
-            logging.info('resuming training of generator')
+            logging.info('[p#{rank}] resuming training of generator')
             checkpointG = torch.load(generator_dir)
             netG.load_state_dict(checkpointG)
 
         if os.path.isfile(discriminator_dir):
-            logging.info('resuming training of discriminator')
+            logging.info('[p#{rank}] resuming training of discriminator')
             checkpointD = torch.load(discriminator_dir)
             netD.load_state_dict(checkpointD)
 
         if os.path.isfile(opt_generator_dir):
-            logging.info('resuming training of opt_generator')
+            logging.info('[p#{rank}] resuming training of opt_generator')
             checkpointOG = torch.load(opt_generator_dir)
             optimG.load_state_dict(checkpointOG)
 
         if os.path.isfile(opt_discriminator_dir):
-            logging.info('resuming training of opt_discriminator')
+            logging.info('[p#{rank}] resuming training of opt_discriminator')
             checkpointOD = torch.load(opt_discriminator_dir)
             optimD.load_state_dict(checkpointOD)
 
@@ -278,7 +278,7 @@ if __name__ == '__main__':
     args.world_size = args.gpus*args.nodes
 
     logging.basicConfig(filename='output.log', level=logging.INFO)
-    logging.info(f'nr: {args.nr}, nodes: {args.nodes}, gpus: {args.gpus}')
+    logging.info(f'[p#0] nr: {args.nr}, nodes: {args.nodes}, gpus: {args.gpus}')
 
     logging.info(f'[p#0] starting {args.world_size} processes')
     mp.spawn(train, nprocs=args.gpus, args=(args,))
