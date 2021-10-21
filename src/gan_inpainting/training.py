@@ -88,10 +88,10 @@ def train(gpu, args):
             )
     # Resume checkpoint if necessary
     if args.checkpoint is True:
-        generator_dir = args.checkpoint_dir + '/generator.pt'
-        discriminator_dir = args.checkpoint_dir + '/discriminator.pt'
-        opt_generator_dir = args.checkpoint_dir + '/opt_generator.pt'
-        opt_discriminator_dir = args.checkpoint_dir + '/opt_discriminator.pt'
+        generator_dir = f'{args.checkpoint_dir}/generator.pt'
+        discriminator_dir = f'{args.checkpoint_dir}/discriminator.pt'
+        opt_generator_dir = f'{args.checkpoint_dir}/opt_generator.pt'
+        opt_discriminator_dir = f'{args.checkpoint_dir}/opt_discriminator.pt'
 
         if os.path.isfile(generator_dir):
             logging.info('resuming training of generator')
@@ -147,6 +147,7 @@ def train(gpu, args):
             }
 
     for ep in range(args.epochs):
+        total_ds_size = len(dataloader)
         for i, (imgs, masks, aug_imgs, aug_masks) in enumerate(dataloader):
             netG.zero_grad()
             netD.zero_grad()
@@ -159,8 +160,8 @@ def train(gpu, args):
 
             imgs = torch.cat([imgs, aug_imgs], dim=0)
             masks = torch.cat([masks, aug_masks], dim=0)
-            imgs = imgs.cuda(gpu)
-            masks = masks.cuda(gpu)
+            imgs = imgs.cuda(gpu, non_blocking=True)
+            masks = masks.cuda(gpu, non_blocking=True)
 
             # change img range from [0,255] to [-1,+1]
             imgs = imgs / 127.5 - 1
@@ -220,8 +221,14 @@ def train(gpu, args):
             optimG.step()
             # every 100 img, print losses, update the graph, output an image as
             # example
+            if i % metrics.screenshot_step == 0:
+                logging.info(
+                        f'[p#{rank}] epoch: {ep}' + \
+                        f'\tstep: {i}/{total_ds_size}' + \
+                        f'\tloss: {loss_gen_recon.item()}'
+                    )
+
             if rank == 0 and i % metrics.screenshot_step == 0:
-                logging.info(f'[p#{rank}] {losses}')
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
@@ -235,6 +242,11 @@ def train(gpu, args):
                 torch.save(optimD.state_dict(), f'{args.checkpoint_dir}/opt_discriminator.pt')
             if rank == 0:
                 metrics.update(losses, pred_pos_neg_imgs, netG, netD)
+        torch.save(netG.state_dict(), f'{args.checkpoint_dir}/generator.pt')
+        torch.save(netD.state_dict(), f'{args.checkpoint_dir}/discriminator.pt')
+        torch.save(optimG.state_dict(), f'{args.checkpoint_dir}/opt_generator.pt')
+        torch.save(optimD.state_dict(), f'{args.checkpoint_dir}/opt_discriminator.pt')
+        logging.info(f'[p#{rank}] training ended.')
     return
 
 if __name__ == '__main__':
