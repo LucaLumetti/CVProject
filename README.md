@@ -30,12 +30,11 @@ The pipeline will be structured as follows:
 - [x] Test the script to test the network (testing.py)
 - [x] Metrics analysis in training.py could be rewritten in a separated class
 - [x] Self attention layer generate CUDA out of memory
-- [x] Low number of channels in generator and discriminator always bc of CUDA out of
+- [x] Low number of channels in generator and discriminator always because of CUDA out of
   memory
-- [x] Give the possibility to resume a training using the saved model as
+- [x] Give the possibility to resume a training using the saved models as
   checkpoint
-- [x] Give the option to transform images to 512x512 and 256x256 before training
-  starting point
-- [ ] Test FID metrics because we need a dataset of generated image
-- [ ] It would be cool to test the network on the same image while training, in
-  order to compare the GAN at different epochs
+- [x] Give the option to transform images to 512x512 and 256x256
+- [x] Test FID metrics because we need a dataset of generated image
+- [x] It would be cool to test the network on the same image while training, in
+- [x] Add support for multiple gpu training with distributed data parallel
