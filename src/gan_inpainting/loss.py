@@ -113,15 +113,15 @@ class Vgg19(nn.Module):
 
 class VGGLoss(nn.Module):
     # vgg19 perceptual loss
-    def __init__(self):
+    def __init__(self, gpu):
         super(VGGLoss, self).__init__()
-        self.vgg = Vgg19().to(device)
+        self.vgg = Vgg19().cuda(gpu)
         self.criterion = nn.L1Loss()
         self.mse_loss = nn.MSELoss()
 
         self.weights = [1.0/32, 1.0/16, 1.0/8, 1.0/4, 1.0]
-        mean = torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).to(device)
-        std = torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).to(device)
+        mean = torch.Tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda(gpu)
+        std = torch.Tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda(gpu)
         self.register_buffer('mean', mean)
         self.register_buffer('std', std)
 

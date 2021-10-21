@@ -16,7 +16,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TrainingMetrics:
 
-    def __init__(self, screenshot_step, video_dir, dataset):
+    def __init__(self, screenshot_step, video_dir, plots_dir, dataset):
         self.losses = dict()
         self.accuracy = []
         self.dataset = dataset
@@ -27,6 +27,7 @@ class TrainingMetrics:
         self.iter = 0
         self.screenshot_step = screenshot_step
         self.video_dir = video_dir
+        self.plots_dir = plots_dir
         self.save_video = True
 
     '''
@@ -81,35 +82,34 @@ class TrainingMetrics:
                 axs.plot(x_axis, self.accuracy, label = "accuracy discr")
                 lgd = axs.legend(bbox_to_anchor = (0.3, 1.3), loc="upper center", ncol=((len(self.losses)+1)//2))
                 fig.tight_layout()
-                fig.savefig(f'plots/loss.png', dpi=fig.dpi, bbox_extra_artists=(lgd,), bbox_inches='tight')
+                fig.savefig(f'{self.plots_dir}/loss.png', dpi=fig.dpi, bbox_extra_artists=(lgd,), bbox_inches='tight')
                 plt.close(fig)
 
             # save video frames x10 more frequently
-            if self.save_video and self.iter % 5 == 0:
-                fimg = self.fimg.to(device)
-                fmask = self.fmask.to(device)
+            # if self.save_video and self.iter % 5 == 0:
+            #     fimg = self.fimg.to(device)
+            #     fmask = self.fmask.to(device)
 
-                # change img range from [0,255] to [-1,+1]
-                fimg = fimg / 127.5 - 1
+            #     # change img range from [0,255] to [-1,+1]
+            #     fimg = fimg / 127.5 - 1
 
-                _, coarse_out, refined_out = netG(fimg[None,:,:], fmask[None,:,:])
+            #     _, coarse_out, refined_out = netG(fimg[None,:,:], fmask[None,:,:])
 
-                # coarse_fimg = coarse_out * fmask + fimg * (1 - fmask)
-                reconstructed_fimg = refined_out * fmask + fimg * (1 - fmask)
+            #     # coarse_fimg = coarse_out * fmask + fimg * (1 - fmask)
+            #     reconstructed_fimg = refined_out * fmask + fimg * (1 - fmask)
 
-                # checkpoint_img = ((img[0] + 1) * 127.5)
-                # checkpoint_fcoarse = ((coarse_fimg[0] + 1) * 127.5)
-                checkpoint_frecon = ((reconstructed_fimg[0] + 1) * 127.5)
+            #     # checkpoint_img = ((img[0] + 1) * 127.5)
+            #     # checkpoint_fcoarse = ((coarse_fimg[0] + 1) * 127.5)
+            #     checkpoint_frecon = ((reconstructed_fimg[0] + 1) * 127.5)
 
-                # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
-                # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
-                save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//5}.png')
+            #     # save_image(checkpoint_img / 255, f'plots/orig_{self.iter}.png')
+            #     # save_image(checkpoint_coarse / 255, f'plots/coarse_{self.iter}.png')
+            #     save_image(checkpoint_frecon/255, f'{self.video_dir}/frame_{self.iter//5}.png')
             self.iter += 1
         return
 
 
 class TestMetrics:
-
     def __init__(self):
         self.ssim = []
         self.pnsr = []
