@@ -17,6 +17,7 @@ pip-log.txt
 *.mp4
 *.aux
 *.bbl
+*.blg
 list.txt
 *.png
 *.pyc
