@@ -229,14 +229,14 @@ def train(gpu, args):
 
             # every 100 img, print losses, update the graph, output an image as
             # example
-            if i % metrics.screenshot_step == 0:
+            if i % args.screenstep == 0:
                 logging.info(
                         f'[p#{rank}] epoch: {ep}' + \
                         f'\tstep: {i}/{total_ds_size}' + \
                         f'\tloss: {loss_gen_recon.item()}'
                     )
 
-            if rank == 0 and i % metrics.screenshot_step == 0:
+            if rank == 0 and i % args.screenstep == 0:
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
