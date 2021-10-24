@@ -363,7 +363,7 @@ class AugmentPipe(torch.nn.Module):
                 images = images * C[:, :, :3].sum(dim=2, keepdims=True) + C[:, :, 3:]
             else:
                 print('Image should be RGB (3 channels) or L (1 channel)')
-                images = C[: :num_channels, :num_channels] @ images + C[:, :num_channels, num_channels:]
+                images[:, :3, :] = C[:, :3, :3] @ images[:, :3, :] + C[:, :3, 3:]
 
             images = images.reshape([batch_size, num_channels, height, width])
 
