@@ -20,7 +20,7 @@ class TrainingMetrics:
         self.losses = dict()
         self.accuracy = []
         self.dataset = dataset
-        self.fimg, self.fmask, _, _ = dataset.__getitem__(0)
+        self.fimg, self.fmask = dataset.__getitem__(0)
         self.ssim = []
         self.psnr = []
         self.lpips = []
