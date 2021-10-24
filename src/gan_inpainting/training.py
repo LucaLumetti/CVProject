@@ -87,8 +87,8 @@ def train(gpu, args):
                 betas=(0.5, 0.999)
             )
 
-    netG, optimG = amp.initialize(netG, optimG, opt_level='O1')
-    netD, optimD = amp.initialize(netD, optimD, opt_level='O1')
+    netG, optimG = amp.initialize(netG, optimG, opt_level='O2')
+    netD, optimD = amp.initialize(netD, optimD, opt_level='O2')
 
     netG = DDP(netG, device_ids=[gpu])
     netD = DDP(netD, device_ids=[gpu])
