@@ -149,7 +149,7 @@ def train(gpu, args):
 
     for ep in range(args.epochs):
         total_ds_size = len(dataloader)
-        for i, (imgs, masks, aug_imgs, aug_masks) in enumerate(dataloader):
+        for i, (imgs, masks) in enumerate(dataloader):
             netG.zero_grad()
             netD.zero_grad()
             optimG.zero_grad()
@@ -159,8 +159,27 @@ def train(gpu, args):
             lossTV.zero_grad()
             lossVGG.zero_grad()
 
+            aug_t = AugmentPipe(
+                        xflip=1.,
+                        rotate90=0.,
+                        xint=0.9,
+                        scale=0.,
+                        rotate=0.,
+                        aniso=0.,
+                        xfrac=0.2,
+                        brightness=0.5,
+                        contrast=0.5,
+                        lumaflip=0.5,
+                        hue=0.5,
+                        saturation=0.5)
+
+            # meh, too many cats/splits
+            imgs_masks = torch.cat([imgs, masks], dim=1)
+            aug_imgs_masks = aug_t(imgs_masks)
+            aug_imgs, aug_masks = torch.split(aug_imgs_masks, [3,1], dim=1)
             imgs = torch.cat([imgs, aug_imgs], dim=0)
             masks = torch.cat([masks, aug_masks], dim=0)
+
             imgs = imgs.cuda(gpu, non_blocking=True)
             masks = masks.cuda(gpu, non_blocking=True)
 
