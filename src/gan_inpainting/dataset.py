@@ -12,6 +12,8 @@ from torchvision.utils import save_image
 
 from torch.utils.data import Dataset, DataLoader
 
+from augmentation import AugmentPipe
+
 class FakeDataset(Dataset):
     def __init__(self):
         return
@@ -26,12 +28,27 @@ class FakeDataset(Dataset):
         return DataLoader(self, **args)
 
 class FaceMaskDataset(Dataset):
-    def __init__(self, dataset_dir, csv_file, transf, aug_t):
+    # remove aug_t also in training, add AugmentPipe
+    def __init__(self, dataset_dir, csv_file, transf):
         self.dataset_dir = dataset_dir
         self.images = pd.read_csv(f'{dataset_dir}/{csv_file}', dtype='str')
         self.dataset_len = len(self.images)
         self.transf = transf if transf is not None else lambda x: x
-        self.aug_t = aug_t
+        # over 4k images, only ~10 will get no transf except for xflip
+        self.aug_t = AugmentPipe(
+                    xflip=1.,
+                    rotate90=0.,
+                    xint=0.9,
+                    scale=0.,
+                    rotate=0.,
+                    aniso=0.,
+                    xfrac=0.2,
+                    bightness=0.5,
+                    contrast=0.5,
+                    lumaflip=0.5,
+                    hue=0.5,
+                    saturation=0.5
+                )
 
     def __len__(self):
         return self.dataset_len
@@ -47,10 +64,18 @@ class FaceMaskDataset(Dataset):
         mask = read_image(mask_name)
         mask = torch.div(mask, 255, rounding_mode='floor')
 
-        img = self.transf(img)
-        mask = self.transf(mask)
-        aug_img = self.aug_t(img)
-        aug_mask = self.aug_t(mask)
+        # join img and mask before aug_t
+        img_mask = torch.cat([img, mask], dim=1)
+
+        img_mask = self.transf(img_mask)
+        aug_img_mask = self.aug_t(img_mask)
+        img, mask = torch.split(img_mask, [3,1], dim=1)
+        aug_img, aug_mask = torch.split(aug_img_mask, [3,1], dim=1)
+        # img = self.transf(img)
+        # mask = self.transf(mask)
+
+        # aug_img = self.aug_t(img)
+        # aug_mask = self.aug_t(mask)
 
         return img, mask, aug_img, aug_mask
 

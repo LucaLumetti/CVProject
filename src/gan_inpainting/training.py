@@ -47,12 +47,7 @@ def train(gpu, args):
     dataset = FaceMaskDataset(
             args.dataset_dir,
             'maskffhq.csv',
-            T.Resize(args.input_size),
-            T.Compose([
-                T.ToPILImage(),
-                T.RandomHorizontalFlip(p=1.0),
-                T.ToTensor(),
-            ])
+            T.Resize(args.input_size)
         )
 
     sampler = torch.utils.data.distributed.DistributedSampler(
