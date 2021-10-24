@@ -63,20 +63,16 @@ class TrainingMetrics:
 
             # every screenshot_step img, print losses, update the graph, output an image as example
             if self.iter % self.screenshot_step == 0:
-                print(f"[{self.iter}]\t" + \
-                      f"accuracy_d: {self.accuracy[-1]},")
+                # print(f"[{self.iter}]\taccuracy_d: {self.accuracy[-1]},")
 
                 fig, axs = plt.subplots(1, 1)
-
                 axs.set_xlabel('iterations')
 
                 for i,key in enumerate(self.losses):
                     name = key
                     value = self.losses[key]
                     x_axis = range(len(self.losses[key]))
-                    print(f"{name}: {value[-1]},")
-
-                    # loss i-th
+                    # print(f"{name}: {value[-1]},")
                     axs.plot(x_axis, value, label = name)
 
                 axs.plot(x_axis, self.accuracy, label = "accuracy discr")

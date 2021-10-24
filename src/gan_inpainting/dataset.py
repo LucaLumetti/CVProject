@@ -45,7 +45,7 @@ class FaceMaskDataset(Dataset):
 
         img = read_image(img_name)
         mask = read_image(mask_name)
-        mask = mask // 255
+        mask = torch.div(mask, 255, rounding_mode='floor')
 
         img = self.transf(img)
         mask = self.transf(mask)
