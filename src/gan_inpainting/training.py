@@ -27,6 +27,8 @@ from dataset import FakeDataset, FaceMaskDataset
 
 from metrics import TrainingMetrics
 
+from augmentation import AugmentPipe
+
 # torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
