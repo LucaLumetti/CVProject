@@ -163,17 +163,11 @@ def train(gpu, args):
 
             aug_t = AugmentPipe(
                         xflip=1.,
-                        rotate90=0.,
-                        xint=0.9,
-                        scale=0.,
-                        rotate=0.,
-                        aniso=0.,
-                        xfrac=0.2,
-                        brightness=0.5,
-                        contrast=0.5,
-                        lumaflip=0.5,
-                        hue=0.5,
-                        saturation=0.5)
+                        xint=0.75,
+                        brightness=0.75,
+                        contrast=0.75,
+                        hue=0.99,
+                        saturation=0.75)
 
             # meh, too many cats/splits
             imgs_masks = torch.cat([imgs, masks], dim=1)
