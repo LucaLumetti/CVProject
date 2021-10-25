@@ -247,11 +247,19 @@ def train(gpu, args):
                     )
 
             if rank == 0 and i % args.screenstep == 0:
+                aug_checkpoint_coarse = ((reconstructed_coarses[-1] + 1) * 127.5)
+                aug_checkpoint_recon = ((reconstructed_imgs[-1] + 1) * 127.5)
+
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
+                save_image(imgs[0] / 255, f'{args.plots_dir}/orig_{i}.png')
                 save_image(checkpoint_coarse / 255, f'{args.plots_dir}/coarse_{i}.png')
                 save_image(checkpoint_recon / 255, f'{args.plots_dir}/recon_{i}.png')
+
+                save_image(aug_imgs[-1] / 255, f'{args.plots_dir}/aug_{i}.png')
+                save_image(checkpoint_coarse / 255, f'{args.plots_dir}/aug_coarse_{i}.png')
+                save_image(checkpoint_recon / 255, f'{args.plots_dir}/aug_recon_{i}.png')
 
                 # maybe save them in metrics.update()
                 torch.save(netG.state_dict(), f'{args.checkpoint_dir}/generator.pt')
