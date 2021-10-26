@@ -27,6 +27,8 @@ from dataset import FakeDataset, FaceMaskDataset
 
 from metrics import TrainingMetrics
 
+from augmentation import AugmentPipe
+
 # torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
@@ -47,12 +49,7 @@ def train(gpu, args):
     dataset = FaceMaskDataset(
             args.dataset_dir,
             'maskffhq.csv',
-            T.Resize(args.input_size),
-            T.Compose([
-                T.ToPILImage(),
-                T.RandomHorizontalFlip(p=1.0),
-                T.ToTensor(),
-            ])
+            T.Resize(args.input_size)
         )
 
     sampler = torch.utils.data.distributed.DistributedSampler(
@@ -154,7 +151,7 @@ def train(gpu, args):
 
     for ep in range(args.epochs):
         total_ds_size = len(dataloader)
-        for i, (imgs, masks, aug_imgs, aug_masks) in enumerate(dataloader):
+        for i, (imgs, masks) in enumerate(dataloader):
             netG.zero_grad()
             netD.zero_grad()
             optimG.zero_grad()
@@ -164,8 +161,21 @@ def train(gpu, args):
             lossTV.zero_grad()
             lossVGG.zero_grad()
 
+            aug_t = AugmentPipe(
+                        xflip=1.,
+                        xint=0.75,
+                        brightness=0.75,
+                        contrast=0.75,
+                        hue=0.99,
+                        saturation=0.75)
+
+            # meh, too many cats/splits
+            imgs_masks = torch.cat([imgs, masks], dim=1)
+            aug_imgs_masks = aug_t(imgs_masks)
+            aug_imgs, aug_masks = torch.split(aug_imgs_masks, [3,1], dim=1)
             imgs = torch.cat([imgs, aug_imgs], dim=0)
             masks = torch.cat([masks, aug_masks], dim=0)
+
             imgs = imgs.cuda(gpu, non_blocking=True)
             masks = masks.cuda(gpu, non_blocking=True)
 
@@ -237,11 +247,19 @@ def train(gpu, args):
                     )
 
             if rank == 0 and i % args.screenstep == 0:
+                aug_checkpoint_coarse = ((reconstructed_coarses[-1] + 1) * 127.5)
+                aug_checkpoint_recon = ((reconstructed_imgs[-1] + 1) * 127.5)
+
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
+                save_image(imgs[0] / 255, f'{args.plots_dir}/orig_{i}.png')
                 save_image(checkpoint_coarse / 255, f'{args.plots_dir}/coarse_{i}.png')
                 save_image(checkpoint_recon / 255, f'{args.plots_dir}/recon_{i}.png')
+
+                save_image(aug_imgs[-1] / 255, f'{args.plots_dir}/aug_{i}.png')
+                save_image(checkpoint_coarse / 255, f'{args.plots_dir}/aug_coarse_{i}.png')
+                save_image(checkpoint_recon / 255, f'{args.plots_dir}/aug_recon_{i}.png')
 
                 # maybe save them in metrics.update()
                 torch.save(netG.state_dict(), f'{args.checkpoint_dir}/generator.pt')
