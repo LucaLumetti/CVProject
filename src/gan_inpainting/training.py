@@ -27,6 +27,8 @@ from dataset import FakeDataset, FaceMaskDataset
 
 from metrics import TrainingMetrics
 
+from augmentation import AugmentPipe
+
 # torch.autograd.set_detect_anomaly(True)
 # a loss history should be held to keep tracking if the network is learning
 # something or is doing completely random shit
@@ -47,12 +49,7 @@ def train(gpu, args):
     dataset = FaceMaskDataset(
             args.dataset_dir,
             'maskffhq.csv',
-            T.Resize(args.input_size),
-            T.Compose([
-                T.ToPILImage(),
-                T.RandomHorizontalFlip(p=1.0),
-                T.ToTensor(),
-            ])
+            T.Resize(args.input_size)
         )
 
     sampler = torch.utils.data.distributed.DistributedSampler(
@@ -100,22 +97,22 @@ def train(gpu, args):
         opt_discriminator_dir = f'{args.checkpoint_dir}/opt_discriminator.pt'
 
         if os.path.isfile(generator_dir):
-            logging.info('[p#{rank}] resuming training of generator')
+            logging.info(f'[p#{rank}] resuming training of generator')
             checkpointG = torch.load(generator_dir)
             netG.load_state_dict(checkpointG)
 
         if os.path.isfile(discriminator_dir):
-            logging.info('[p#{rank}] resuming training of discriminator')
+            logging.info(f'[p#{rank}] resuming training of discriminator')
             checkpointD = torch.load(discriminator_dir)
             netD.load_state_dict(checkpointD)
 
         if os.path.isfile(opt_generator_dir):
-            logging.info('[p#{rank}] resuming training of opt_generator')
+            logging.info(f'[p#{rank}] resuming training of opt_generator')
             checkpointOG = torch.load(opt_generator_dir)
             optimG.load_state_dict(checkpointOG)
 
         if os.path.isfile(opt_discriminator_dir):
-            logging.info('[p#{rank}] resuming training of opt_discriminator')
+            logging.info(f'[p#{rank}] resuming training of opt_discriminator')
             checkpointOD = torch.load(opt_discriminator_dir)
             optimD.load_state_dict(checkpointOD)
 
@@ -128,6 +125,7 @@ def train(gpu, args):
 
     # only rank 0 update metrics
     if(rank == 0):
+        logging.info(f'[p#{rank}] preparing the metric class')
         metrics = TrainingMetrics(
                 args.screenstep,
                 args.video_dir,
@@ -154,7 +152,7 @@ def train(gpu, args):
 
     for ep in range(args.epochs):
         total_ds_size = len(dataloader)
-        for i, (imgs, masks, aug_imgs, aug_masks) in enumerate(dataloader):
+        for i, (imgs, masks) in enumerate(dataloader):
             netG.zero_grad()
             netD.zero_grad()
             optimG.zero_grad()
@@ -164,8 +162,21 @@ def train(gpu, args):
             lossTV.zero_grad()
             lossVGG.zero_grad()
 
+            aug_t = AugmentPipe(
+                        xflip=1.,
+                        xint=0.75,
+                        brightness=0.75,
+                        contrast=0.75,
+                        hue=0.99,
+                        saturation=0.75)
+
+            # meh, too many cats/splits
+            imgs_masks = torch.cat([imgs, masks], dim=1)
+            aug_imgs_masks = aug_t(imgs_masks)
+            aug_imgs, aug_masks = torch.split(aug_imgs_masks, [3,1], dim=1)
             imgs = torch.cat([imgs, aug_imgs], dim=0)
             masks = torch.cat([masks, aug_masks], dim=0)
+
             imgs = imgs.cuda(gpu, non_blocking=True)
             masks = masks.cuda(gpu, non_blocking=True)
 
@@ -178,14 +189,10 @@ def train(gpu, args):
             reconstructed_coarses = coarse_out*masks + imgs*(1-masks)
             reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
-            # pos_imgs = torch.cat([imgs, masks], dim=1)
-            # neg_imgs = torch.cat([reconstructed_imgs, masks], dim=1)
-            # pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
             pos_neg_imgs = torch.cat([imgs, reconstructed_imgs], dim=0)
             dmasks = torch.cat([masks, masks], dim=0)
 
             # forward D
-            # pos_neg_imgs, dmasks = torch.split(pos_neg_imgs, (3,1), dim=1)
             pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
             pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
@@ -237,11 +244,19 @@ def train(gpu, args):
                     )
 
             if rank == 0 and i % args.screenstep == 0:
+                aug_checkpoint_coarse = ((reconstructed_coarses[-1] + 1) * 127.5)
+                aug_checkpoint_recon = ((reconstructed_imgs[-1] + 1) * 127.5)
+
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
+                save_image(imgs[0] / 255, f'{args.plots_dir}/orig_{i}.png')
                 save_image(checkpoint_coarse / 255, f'{args.plots_dir}/coarse_{i}.png')
                 save_image(checkpoint_recon / 255, f'{args.plots_dir}/recon_{i}.png')
+
+                save_image(aug_imgs[-1] / 255, f'{args.plots_dir}/aug_{i}.png')
+                save_image(checkpoint_coarse / 255, f'{args.plots_dir}/aug_coarse_{i}.png')
+                save_image(checkpoint_recon / 255, f'{args.plots_dir}/aug_recon_{i}.png')
 
                 # maybe save them in metrics.update()
                 torch.save(netG.state_dict(), f'{args.checkpoint_dir}/generator.pt')
