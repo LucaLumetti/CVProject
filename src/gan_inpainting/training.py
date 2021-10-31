@@ -97,22 +97,22 @@ def train(gpu, args):
         opt_discriminator_dir = f'{args.checkpoint_dir}/opt_discriminator.pt'
 
         if os.path.isfile(generator_dir):
-            logging.info('[p#{rank}] resuming training of generator')
+            logging.info(f'[p#{rank}] resuming training of generator')
             checkpointG = torch.load(generator_dir)
             netG.load_state_dict(checkpointG)
 
         if os.path.isfile(discriminator_dir):
-            logging.info('[p#{rank}] resuming training of discriminator')
+            logging.info(f'[p#{rank}] resuming training of discriminator')
             checkpointD = torch.load(discriminator_dir)
             netD.load_state_dict(checkpointD)
 
         if os.path.isfile(opt_generator_dir):
-            logging.info('[p#{rank}] resuming training of opt_generator')
+            logging.info(f'[p#{rank}] resuming training of opt_generator')
             checkpointOG = torch.load(opt_generator_dir)
             optimG.load_state_dict(checkpointOG)
 
         if os.path.isfile(opt_discriminator_dir):
-            logging.info('[p#{rank}] resuming training of opt_discriminator')
+            logging.info(f'[p#{rank}] resuming training of opt_discriminator')
             checkpointOD = torch.load(opt_discriminator_dir)
             optimD.load_state_dict(checkpointOD)
 
@@ -125,6 +125,7 @@ def train(gpu, args):
 
     # only rank 0 update metrics
     if(rank == 0):
+        logging.info(f'[p#{rank}] preparing the metric class')
         metrics = TrainingMetrics(
                 args.screenstep,
                 args.video_dir,
@@ -188,14 +189,10 @@ def train(gpu, args):
             reconstructed_coarses = coarse_out*masks + imgs*(1-masks)
             reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
-            # pos_imgs = torch.cat([imgs, masks], dim=1)
-            # neg_imgs = torch.cat([reconstructed_imgs, masks], dim=1)
-            # pos_neg_imgs = torch.cat([pos_imgs, neg_imgs], dim=0)
             pos_neg_imgs = torch.cat([imgs, reconstructed_imgs], dim=0)
             dmasks = torch.cat([masks, masks], dim=0)
 
             # forward D
-            # pos_neg_imgs, dmasks = torch.split(pos_neg_imgs, (3,1), dim=1)
             pred_pos_neg_imgs = netD(pos_neg_imgs, dmasks)
             pred_pos_imgs, pred_neg_imgs = torch.chunk(pred_pos_neg_imgs, 2, dim=0)
 
