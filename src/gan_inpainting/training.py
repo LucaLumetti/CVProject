@@ -167,7 +167,7 @@ def train(gpu, args):
                         xint=0.75,
                         brightness=0.75,
                         contrast=0.75,
-                        hue=0.99,
+                        hue=1.,
                         saturation=0.75)
 
             # meh, too many cats/splits
@@ -250,13 +250,13 @@ def train(gpu, args):
                 checkpoint_coarse = ((reconstructed_coarses[0] + 1) * 127.5)
                 checkpoint_recon = ((reconstructed_imgs[0] + 1) * 127.5)
 
-                save_image(imgs[0] / 255, f'{args.plots_dir}/orig_{i}.png')
+                save_image(((imgs[0] + 1) * 127.5) / 255, f'{args.plots_dir}/orig_{i}.png')
                 save_image(checkpoint_coarse / 255, f'{args.plots_dir}/coarse_{i}.png')
                 save_image(checkpoint_recon / 255, f'{args.plots_dir}/recon_{i}.png')
 
-                save_image(aug_imgs[-1] / 255, f'{args.plots_dir}/aug_{i}.png')
-                save_image(checkpoint_coarse / 255, f'{args.plots_dir}/aug_coarse_{i}.png')
-                save_image(checkpoint_recon / 255, f'{args.plots_dir}/aug_recon_{i}.png')
+                save_image(((aug_imgs[-1] + 1) * 127.5) / 255, f'{args.plots_dir}/aug_{i}.png')
+                save_image(aug_checkpoint_coarse / 255, f'{args.plots_dir}/aug_coarse_{i}.png')
+                save_image(aug_checkpoint_recon / 255, f'{args.plots_dir}/aug_recon_{i}.png')
 
                 # maybe save them in metrics.update()
                 torch.save(netG.state_dict(), f'{args.checkpoint_dir}/generator.pt')

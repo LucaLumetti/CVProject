@@ -49,6 +49,9 @@ class FaceMaskDataset(Dataset):
         mask = read_image(mask_name)
         mask = torch.div(mask, 255, rounding_mode='floor')
 
+        img = self.transf(img)
+        mask = self.transf(mask)
+
         return img.float(), mask.float()
 
     def loader(self, **args):
