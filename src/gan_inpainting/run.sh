@@ -17,4 +17,5 @@ python training.py \
   --epochs 1                                                        \
   --nodes 1                                                         \
   --gpus 2                                                          \
-  --nr 0
+  --nr 0                                                            \
+  --checkpoint 1
