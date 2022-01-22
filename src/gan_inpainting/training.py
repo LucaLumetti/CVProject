@@ -90,7 +90,7 @@ def train(gpu, args):
     netG = DDP(netG, device_ids=[gpu])
     netD = DDP(netD, device_ids=[gpu])
     # Resume checkpoint if necessary
-    if args.checkpoint == 1:
+    if args.checkpoint == True:
         generator_dir = f'{args.checkpoint_dir}/generator.pt'
         discriminator_dir = f'{args.checkpoint_dir}/discriminator.pt'
         opt_generator_dir = f'{args.checkpoint_dir}/opt_generator.pt'
@@ -274,8 +274,8 @@ def train(gpu, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Training")
-    parser.add_argument("--checkpoint", default=0, type=int, help="resume training")
-    parser.add_argument("--screenstep", default=500, type=int, help="how often output metrics and imgs")
+    parser.add_argument("--checkpoint", default=False, help="resume training")
+    parser.add_argument("--screenstep", default=100, type=int, help="how often output metrics and imgs")
     parser.add_argument("--nodes", default=1, type=int, help="number of nodes")
     parser.add_argument("--gpus", default=1, type=int, help="number of gpus per node")
     parser.add_argument("--nr", default=0, type=int, help="ranking within the nodes")
