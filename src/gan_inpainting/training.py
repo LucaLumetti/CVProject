@@ -90,7 +90,7 @@ def train(gpu, args):
     netG = DDP(netG, device_ids=[gpu])
     netD = DDP(netD, device_ids=[gpu])
     # Resume checkpoint if necessary
-    if args.checkpoint == True:
+    if args.checkpoint is True:
         generator_dir = f'{args.checkpoint_dir}/generator.pt'
         discriminator_dir = f'{args.checkpoint_dir}/discriminator.pt'
         opt_generator_dir = f'{args.checkpoint_dir}/opt_generator.pt'
