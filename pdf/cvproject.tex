@@ -258,7 +258,7 @@ In this stage there are 4 ResNet blocks with different dilation and some gated c
 This modified ResNet blocks are called Spatial Pyramid Dilation(SPD). This layer is composed of different convolutional blocks with different dilation, and the output of these blocks is concatenated together. With different value of dilation rate we can take information from a bigger receptive field.
 \includegraphics[width=1\linewidth]{img/ResNetSPD.png}
 Another useful feature that is implemented in this net is the Multi Scale Self Attention (MSSA). The MSSA using the self-similarity between different layers and it's helpful to have a better coherence in the final image. We are control the self-similarity with three different scale: 16x16, 32x32, 64x64.
-The central layer are composed of self attention block. We use standard convolutional layer to reduce the size before the self attention. In this manner we avoid an excessive increase of the parameters. With self attention we can find a better correlation between feature and we have a better reconstruction. To improve the stability of the network during the training, all the layers are spectrally normalized.
+The central layer are composed of self attention block. We use standard convolutional layer to reduce the size before the self attention. In this manner we avoid an excessive increase of the parameters. With self attention we can find a better correlation between feature and we have a better reconstruction.
 \subsubsection{Discriminator}
 Our discriminator is composed by 6 convolutional blocks with kernel size 5 and stride 2.
 These convolutional methods allow to captures the Markovian patches that represents better contextual feature\cite{li2016precomputed}.
