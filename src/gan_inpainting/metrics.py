@@ -132,7 +132,10 @@ class TestMetrics:
         return a dict with metrics
     '''
     def get_metrics(self):
-        return dict({"SSIM": np.mean(self.ssim), "PSNR": np.mean(self.pnsr), "LPIPS": np.mean(self.lpips)})
+        return dict({
+            "SSIM": np.mean(self.ssim),
+            "PSNR": np.mean(self.pnsr),
+            "LPIPS": np.mean(self.lpips)})
 
     '''
         plot metrics and save it
@@ -254,7 +257,7 @@ class TestMetrics:
     '''
         calculate Perceptual similarity (LPIPS)
         Params:
-        --original      : tansor with original image, size (N,3,H,W)
+        --original      : tensor with original image, size (N,3,H,W)
         --generated     : tensot with generated image, size (N,3,H,W)
         return:
         --result        : average between N LPIPS
