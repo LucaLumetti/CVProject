@@ -115,80 +115,76 @@ The input of the network is a pre-processed RGB image so that its values are in 
 For initializing the starting values of the network weigths, we opted for Kaiming initialization method.
 We provided different methods to initialize the starting values of the network weights, such as normal, Xavier, orthogonal and, the default one, Kaiming.
 \\
-We went for Adam as the generator and discriminator optimizer using a \(0.5\) momentum and different learning rates, respectively \(0.0001\) and \(0.0004\) for the first 10 epochs and then they will linearly decrease.
+We went for Adam as the generator and discriminator optimizer using a \(0.5\) momentum and different learning rates, respectively \(0.0001\) and \(0.0004\) for the first 10 epochs and then they will linearly decrease for 5 more epochs.
 %-------------------------------------------------------------------------
-\subsection{Network learning}
-Our loss function is the sum of six different loss functions:
+\subsection{Losses}
+Our final loss function is given by the sum of six different losses:
 \begin{equation}
     \resizebox{.47 \textwidth}{!}{%
     $\mathcal{L}_{tot} = \mathcal{L}_{adv} + \mathcal{L}_{recon} + \mathcal{L}_{tv} + \mathcal{L}_{contra} + \lambda_{perc} \cdot \mathcal{L}_{perc} + \lambda_{style} \cdot \mathcal{L}_{style}$%
     }
 \end{equation}
 \\
-In the following formulas we will use symbols to refer to specific elements such:
+In the following formulas we will use symbols to refer to specific elements of the loss function, $\mathbf{I}_{in}$ is the masked image, $\mathbf{I}_{gt}$ is the reference ground truth image, $\mathbf{I}_{out}$ is the output of the refinement stage, $\mathbf{I}_{com}$ is the masked image where masked pixels are replaced with $\mathbf{I}_{out}$.
 \\
-\begin{tabular}{ c c }
-    \(\mathbf{I}_{in}\)        & masked input image\\
-    \(\mathbf{I}_{gt}\)        & reference ground truth image \\
-    \(\mathbf{I}_{out}\)       & output image (after refinement stage) \\
-    \(\mathbf{I}_{completed}\) & \(\mathbf{I}_{out}\) with valid pixels replaced by ground truth \\
-\end{tabular}
-\\
-\\
-\textbf{Adversarial Loss.} 
+% \begin{tabular}{ c c }
+%     \(\mathbf{I}_{in}\)        & masked input image\\
+%     \(\mathbf{I}_{gt}\)        & reference ground truth image \\
+%     \(\mathbf{I}_{out}\)       & output image (after refinement stage) \\
+%     \(\mathbf{I}_{com}\) & \(\mathbf{I}_{out}\) with valid pixels replaced by ground truth \\
+% \end{tabular}
+% \\
+% \\
+\subsubsection{Adversarial Loss.}
 \begin{equation}
-    \mathcal{L}_{gen} = -\mathbb{E}_{\mathbf{I}_{in} \sim \mathbb{P}_i} [D(\mathbf{I}_{in},\mathbf{I}_{completed})]
+    \mathcal{L}_{gen} = -\mathbb{E}_{\mathbf{I}_{in} \sim \mathbb{P}_i} [D(\mathbf{I}_{in},\mathbf{I}_{com})]
 \end{equation}
 \begin{equation}
     \resizebox{.47 \textwidth}{!}{%
-    $\mathcal{L}_{discr} = \mathbb{E}_{\mathbf{I}_{in} \sim \mathbb{P}_i} [\mathrm{ReLU}(1-D(\mathbf{I}_{in},\mathbf{I}_{gt}) + \mathrm{ReLU}(1+D(\mathbf{I}_{in},\mathbf{I}_{completed})]$%
+    $\mathcal{L}_{discr} = \mathbb{E}_{\mathbf{I}_{in} \sim \mathbb{P}_i} [\mathrm{ReLU}(1-D(\mathbf{I}_{in},\mathbf{I}_{gt}) + \mathrm{ReLU}(1+D(\mathbf{I}_{in},\mathbf{I}_{com})]$%
     }
 \end{equation}
-where \(\mathbb{P}_i\) is the data distribution of \(\mathbf{I}_{in}\), \textit{D} and \textit{G} are, respectively, the discriminator and the generator and ReLU is the rectified linear unit defined as \(f(x) = \mathrm{max}(0,x)\).\\
-It is the GAN Hinge loss for generative adversarial learning where discriminator is trained to distinguish \(\mathbf{I}_{completed}\) from \(\mathbf{I}_{gt}\) and generator has the aim of cheating the classification of the discriminator.
-\\
-\\
-\textbf{Reconstruction Loss.} 
+where \(\mathbb{P}_i\) is the data distribution of $\mathbf{I}_{in}$, \textit{D} and \textit{G} are, respectively, the discriminator and the generator and ReLU is the rectified linear unit defined as \(f(x) = \mathrm{max}(0,x)\).\\
+It is the GAN Hinge loss for generative adversarial learning where discriminator is trained to distinguish $\mathbf{I}_{com}$ from $\mathbf{I}_{gt}$ and generator has the aim of cheating the classification of the discriminator.
+
+\subsubsection{Reconstruction Loss.}
 \begin{equation}
     \mathcal{L}_{recon} = \lambda_{hole} \mathcal{L}_{hole} + \mathcal{L}_{valid}
 \end{equation}
 where \(\mathcal{L}_{hole}\) is the sums of the distances calculated only from the missing pixels, \(\mathcal{L}_{valid}\) is like \(\mathcal{L}_{hole}\) but for valid pixels. \(\lambda_{hole}\) is a weight to the pixel-wise loss withing the missing regions.
-\\
-\\
-\textbf{Total variation (TV) Loss.} 
+
+\subsubsection{Total variation (TV) Loss.}
 \begin{equation}
 \resizebox{.47 \textwidth}{!}{%
-    $\mathcal{L}_{tv} = \sum^{H-1,W}_{x,y} \frac{\norm{ \mathbf{I}^{x+1,y}_{completed} - \mathbf{I}^{x,y}_{completed} }_1}{N^{row}_{\mathbf{I}_{completed}}} + \sum^{H,W-1}_{x,y} \frac{\norm{ \mathbf{I}^{x,y+1}_{completed} - \mathbf{I}^{x,y}_{completed} }_1}{N^{col}_{\mathbf{I}_{completed}}}$%
+    $\mathcal{L}_{tv} = \sum^{H-1,W}_{x,y} \frac{\norm{ \mathbf{I}^{x+1,y}_{com} - \mathbf{I}^{x,y}_{com} }_1}{N^{row}_{\mathbf{I}_{com}}} + \sum^{H,W-1}_{x,y} \frac{\norm{ \mathbf{I}^{x,y+1}_{com} - \mathbf{I}^{x,y}_{com} }_1}{N^{col}_{\mathbf{I}_{com}}}$%
     }
 \end{equation}
-where \textit{H} and \textit{W} are the height and width of \(\mathbf{I}_{completed}\) and \(N^{row}_\mathbf{I}_{completed}\) and \(N^{col}_\mathbf{I}_{completed}\) are the number of pixels in \(\mathbf{I}_{completed}\) without the last row and the last column.
+where \textit{H} and \textit{W} are the height and width of $\mathbf{I}_{com}$ and $N^{row}_{\mathbf{I}_{com}}$ and $N^{col}_{\mathbf{I}_{com}}$ are the number of pixels in $\mathbf{I}_{com}$ without the last row and the last column.
 \\
 It is responsible of the regularization of the image to improve the smoothness of the output image.
-\\
-\\
-\textbf{Perceptual Loss.} 
+
+\subsubsection{Perceptual Loss.}
 \begin{equation}
 \resizebox{.47 \textwidth}{!}{%
-    $\mathcal{L}_{perceptual} = \sum^L_{l=1} \frac{\norm{ \phi^{\mathbf{I}_{out}}_l - \phi^{\mathbf{I}_{gt}}_l }_1}{N_{\phi^{\mathbf{I}_{gt}}_l}} + \sum^L_{l=1} \frac{\norm{ \phi^{\mathbf{I}_{completed}}_l - \phi^{\mathbf{I}_{gt}}_l }_1}{N_{\phi^{\mathbf{I}_{gt}}_l}}$%
+    $\mathcal{L}_{perceptual} = \sum^L_{l=1} \frac{\norm{ \phi^{\mathbf{I}_{out}}_l - \phi^{\mathbf{I}_{gt}}_l }_1}{N_{\phi^{\mathbf{I}_{gt}}_l}} + \sum^L_{l=1} \frac{\norm{ \phi^{\mathbf{I}_{com}}_l - \phi^{\mathbf{I}_{gt}}_l }_1}{N_{\phi^{\mathbf{I}_{gt}}_l}}$%
     }
 \end{equation}
 where \(\phi\) is the well-trained loss network, VGG-19\cite{simonyan2014very}, and \(\phi^{\mathbf{I}}_l\) the actiovation maps of the \(l^{th}\) layer of \(\phi\) given an image \(\mathbf{I}\).
 \(N_{\phi^{\mathbf{I}_{gt}}_l}\) denotes the number of elements in \(\phi^{\mathbf{I}_{gt}}_l\) and \textit{L} is the number of layers used.
 This loss represents the L1-norm distance between high-level feature representations in 5 different convolutive layers. Its weight is set to \(0.05\).
-\\
-\textbf{Style Loss.}
+
+\subsubsection{Style Loss.}
 \begin{equation}
     \resizebox{.47 \textwidth}{!}{%
-        $\mathcal{L}_{style} = \sum^{\mathbf{I}_{out},\mathbf{I}_{completed}}_{l=1} \sum^L_{l=1} \frac{1}{C_l C_l} \norm{ \frac{1}{C_l H_l W_l} ((\phi^{\mathbf{I}}_l)^\top(\phi^{\mathbf{I}}_l) - (\phi^{\mathbf{I}_{gt}}_l)^\top(\phi^{\mathbf{I}_{gt}}_l)  )}$%
-}   
+        $\mathcal{L}_{style} = \sum^{\mathbf{I}_{out},\mathbf{I}_{com}}_{l=1} \sum^L_{l=1} \frac{1}{C_l C_l} \norm{ \frac{1}{C_l H_l W_l} ((\phi^{\mathbf{I}}_l)^\top(\phi^{\mathbf{I}}_l) - (\phi^{\mathbf{I}_{gt}}_l)^\top(\phi^{\mathbf{I}_{gt}}_l)  )}$%
+}
 \end{equation}
 \\
 where \(C_l\) refers to the number of activation maps of the \(l^{th}\) layer of \(\phi\) and \(H_l\) and \(W_l\) are its height and width respectively. With \((\phi^{\mathbf{I}}_l)^\top(\phi^{\mathbf{I}}_l)\) we represented the auto-correlation matrix, the Gram matrix\cite{gatys1508neural} which computes the features correlations between each activation map of the \(l^{th}\) layer of \(\phi\) given the image \(\mathbf{I}\).
 \\
 Using the same 5 levels of the previous loss, it is the sum of the distances of the auto-correlation matrixes between the output and the ground truth multiplied by a factor that depends on the size and number of the activation maps in those layers. Its weigth is set to \(40\).
-\\
-\\
-\textbf{Contrastive loss.}
+
+\subsubsection{Contrastive loss.}
 \begin{equation}
     \resizebox{.47 \textwidth}{!}{%
     $\mathcal{L}_{contrastive} = - \log{\frac{exp(z_{i}^\intercal z_{i}^{'}/\tau)}{\sum_{j=0}^{K}exp(z_{i}z_{j}^{'}/\tau)}}
@@ -202,18 +198,25 @@ To calculate this loss we use the feature vector with the biggest number of chan
 \subsection{Datasets}
 GAN networks are data-hungry and needs a lot of diverse training examples in
 order to generate quality images, for this reason we used the FFHQ 1024x1024
-images \cite{karras2019style}, rescaled to 256x256, during training.  In other GAN inpainting
+images \cite{karras2019style}, rescaled to 256x256.  In other GAN inpainting
 architectures, the mask region to reconstruct is usually calculated during the
 training in a randomized way.  We do not have this randomization process, so for
 each image of FFHQ we precalculated the face region where the mask is weared
 using facial landmarks.  To test our network, instead, we decided to use CelebA256 dataset.
 
 \subsection{Architecture}
-Our architecture is highly inspired by Free Form Image Inpainting with Gated Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
+Our architecture is highly inspired by Free Form Image Inpainting with Gated
+Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
 Our net is composed of two stages: Coarse Network and Refine Network.
 \subsubsection{Coarse Network}
-In this stage we decided to use the gated convolution so that the generator is able to learn a dynamic feature selection mechanism for each channel and for each spatial location. The feature selection mechanism takes into account not only the background and the mask given in input, but also the semantic segmentation in some channels.
-Furthermore using gated convolutive layers we can avoid the inner drawbacks of vanilla and partial convolution. In fact taking a look to the vanilla convolution formula:
+In this stage we decided to use the gated convolution so that the generator is
+able to learn a dynamic feature selection mechanism for each channel and for
+each spatial location. The feature selection mechanism takes into account not
+only the background and the mask given in input, but also the semantic
+segmentation in some channels.
+Furthermore using gated convolutive layers we can avoid the inner drawbacks of
+vanilla and partial convolution. In fact taking a look to the vanilla
+convolution formula:
 \begin{equation}
     O_{y,x} = \sum_{i=-k'_h}^{k'_h}\sum_{j=-k'_w}^{k'_w} W_{k'_h + i, k'_w + j} \cdot I_{y + i, x + j}
 \end{equation}
@@ -255,7 +258,7 @@ In this stage there are 4 ResNet blocks with different dilation and some gated c
 This modified ResNet blocks are called Spatial Pyramid Dilation(SPD). This layer is composed of different convolutional blocks with different dilation, and the output of these blocks is concatenated together. With different value of dilation rate we can take information from a bigger receptive field.
 \includegraphics[width=1\linewidth]{img/ResNetSPD.png}
 Another useful feature that is implemented in this net is the Multi Scale Self Attention (MSSA). The MSSA using the self-similarity between different layers and it's helpful to have a better coherence in the final image. We are control the self-similarity with three different scale: 16x16, 32x32, 64x64.
-The central layer are composed of self attention block. We use standard convolutional layer to reduce the size before the self attention. In this manner we avoid an excessive increase of the parameters. With self attention we can find a better correlation between feature and we have a better reconstruction.
+The central layer are composed of self attention block. We use standard convolutional layer to reduce the size before the self attention. In this manner we avoid an excessive increase of the parameters. With self attention we can find a better correlation between feature and we have a better reconstruction. To improve the stability of the network during the training, all the layers are spectrally normalized.
 \subsubsection{Discriminator}
 Our discriminator is composed by 6 convolutional blocks with kernel size 5 and stride 2.
 These convolutional methods allow to captures the Markovian patches that represents better contextual feature\cite{li2016precomputed}.
@@ -264,7 +267,7 @@ The input of this network is the image (real or fake) and the relative mask.
 \begin{equation}
     \resizebox{.47 \textwidth}{!}{%
         $\mathcal{L}_{D^{sn}}= \mathbb{E}_{x\sim \mathbb{P}_{data(x)}} \left [ ReLU(1-D^{sn}(x))) \right ] + \mathbb{E}_{z\sim \mathbb{P}_{data(x)}} \left [ ReLU(1+D^{sn}(G(z)))\right ]$%
-}   
+}
 \end{equation}
 
 where \(D^{sn}\) is the spectral-normalized discriminator and G is the generator that create the image z.

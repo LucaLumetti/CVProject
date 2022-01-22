@@ -1,46 +1,48 @@
-This is BibTeX, Version 0.99d (TeX Live 2020/Debian)
+This is BibTeX, Version 0.99d (TeX Live 2021/Arch Linux)
 Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: cvproject.aux
 The style file: plain.bst
 Database file #1: cvproject.bib
-You've used 4 entries,
+Warning--empty year in gatys1508neural
+You've used 10 entries,
             2118 wiz_defined-function locations,
-            520 strings with 4909 characters,
-and the built_in function-call counts, 1952 in all, are:
-= -- 191
-> -- 102
-< -- 3
-+ -- 41
-- -- 36
-* -- 133
-:= -- 302
-add.period$ -- 13
-call.type$ -- 4
-change.case$ -- 30
+            549 strings with 5878 characters,
+and the built_in function-call counts, 3777 in all, are:
+= -- 367
+> -- 205
+< -- 4
++ -- 82
+- -- 70
+* -- 244
+:= -- 622
+add.period$ -- 32
+call.type$ -- 10
+change.case$ -- 65
 chr.to.int$ -- 0
-cite$ -- 4
-duplicate$ -- 79
-empty$ -- 142
-format.name$ -- 36
-if$ -- 425
+cite$ -- 11
+duplicate$ -- 152
+empty$ -- 268
+format.name$ -- 70
+if$ -- 800
 int.to.chr$ -- 0
-int.to.str$ -- 4
-missing$ -- 4
-newline$ -- 23
-num.names$ -- 8
-pop$ -- 37
+int.to.str$ -- 10
+missing$ -- 10
+newline$ -- 53
+num.names$ -- 20
+pop$ -- 77
 preamble$ -- 1
-purify$ -- 26
+purify$ -- 55
 quote$ -- 0
-skip$ -- 66
+skip$ -- 119
 stack$ -- 0
-substring$ -- 120
-swap$ -- 34
-text.length$ -- 3
+substring$ -- 183
+swap$ -- 50
+text.length$ -- 4
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 16
-warning$ -- 0
-while$ -- 17
-width$ -- 5
-write$ -- 47
+type$ -- 40
+warning$ -- 1
+while$ -- 32
+width$ -- 12
+write$ -- 108
+(There was 1 warning)
