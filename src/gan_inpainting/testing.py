@@ -73,7 +73,6 @@ def test(netG, netD, dataloader, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Testing")
-    parser.add_argument("--checkpoint", default=0, type=int, help="resume training")
     parser.add_argument("--batch_size", default=2, type=int, help="batch size")
     parser.add_argument("--input_size", default=256, type=int, help="size of the imgs")
     parser.add_argument("--dataset_dir", type=str, help="dataset location", required=True)
@@ -88,8 +87,8 @@ if __name__ == '__main__':
     netG = MSSAGenerator(input_size=args.input_size).to(device)
     netD = Discriminator(input_size=args.input_size).to(device)
 
-    netG.load_state_dict(torch.load(f'{args.dataset_dir}/generator.pt', map_location=device))
-    netD.load_state_dict(torch.load(f'{args.dataset_dir}/discriminator.pt', map_location=device))
+    netG.load_state_dict(torch.load(f'{args.checkpoint_dir}/generator.pt', map_location=device))
+    netD.load_state_dict(torch.load(f'{args.checkpoint_dir}/discriminator.pt', map_location=device))
 
     metrics = test(netG, netD, dataloader, args)
     print(metrics)
