@@ -145,10 +145,11 @@ class MSSAGenerator(nn.Module):
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 # atrous
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(self.size//4, 3, 1, 2)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(self.size//4, 3, 1, 4)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(self.size//4, 3, 1, 8)),
