@@ -193,16 +193,31 @@ Using the same 5 levels of the previous loss, it is the sum of the distances of 
 \end{equation}
 The equation \eqref{eq:8} \cite{le2020contrastive} is the categorical cross-entropy of classifying the positive sample correctly\cite{oord2018representation}. \((z_{i}, z_{i}^{'})\) are the encoding version of the images \((x_{q}, x_{k})\), where \(x_{q}\)is the original image and \(x_{k}\) is the trasformated image. \(\tau\) is an hyper-parameter that control the sensitivity of the product and it's called temperature. The dot product between the encoding vector of the original image and the traformated image measure the similarity between rappresentations. In our network the positive images are created by the original images with some transformations and we don't use negative examples.
 This loss is helpful to get more information during the training because the network learns from the similarity between images. This methods try to maximise similarity between representations of positive similar pairs and minimises the similarity with the feature extracted from negative images\cite{le2020contrastive}.
-To calculate this loss we use the feature vector with the biggest number of channels in our network (512). We squeeze this vector in a way that preserve the information of the original image with average pooling so we use a vector with dimension 1x1x512. 
+To calculate this loss we use the feature vector with the biggest number of channels in our network (512). We squeeze this vector in a way that preserve the information of the original image with average pooling so we use a vector with dimension 1x1x512.
+The transformations used are inspired by StyleGAN\cite{karras2020analyzing} and they are:
+\begin{itemize}
+  \item horizontal flip with probability 1.0
+  \item change in brightness with probability 0.75
+  \item change in contrast with probability 0.75
+  \item change in saturation with probability 0.75
+  \item hue rotation with probability 1.0
+\end{itemize}
+% DA RISCRIVERE MEGLIO?
+These transformations are been proven to be effective in our case as the network
+was overfitting the skin color and the mouth position; some image in the FFHQ
+dataset are from people with painted face (blue and red), when the network was
+feeded with these images, the inpainted region wasn't of the same color of the
+face. After implementing augmentation and contrastive loss, these problems disappeared.
 
 \subsection{Datasets}
 GAN networks are data-hungry and needs a lot of diverse training examples in
 order to generate quality images, for this reason we used the FFHQ 1024x1024
 images \cite{karras2019style}, rescaled to 256x256.  In other GAN inpainting
 architectures, the mask region to reconstruct is usually calculated during the
-training in a randomized way.  We do not have this randomization process, so for
+training in a randomized way.  As we do not need this randomization process, for
 each image of FFHQ we precalculated the face region where the mask is weared
-using facial landmarks.  To test our network, instead, we decided to use CelebA256 dataset.
+using facial landmarks. To test our network, instead, we use CelebA256 dataset
+in order to compare our results with DeepGIN.
 
 \subsection{Architecture}
 Our architecture is highly inspired by Free Form Image Inpainting with Gated
@@ -271,6 +286,14 @@ The input of this network is the image (real or fake) and the relative mask.
 \end{equation}
 
 where \(D^{sn}\) is the spectral-normalized discriminator and G is the generator that create the image z.
+
+\subsection{Multi-GPU and Multi-Node Training}
+% Da rivedere
+The network has been designed to be trained on multi-GPUs and multi-nodes, as during the development we have understood that a single Nvidia K80  we could use a maximum batch size of 1 (which became 2 after the data augmentation). Our first idea to overcome this problem was to use 2 Nvidia K80 as these are the resource given by AImagelab server for this project. This brings our maximum batch size to 3 (which became 6 after data augmentation). Still we weren't happy as in 24 hours we could't complete a full epoch. Second idea was to exploit the fact that we had 3 accounts and each of them could use 2 GPUs and the same time, so we basically had 6 GPUs in total, could we use all of them at the sime time?\\
+We started to develop multi-node training and each account was seen as a single node.
+Every account could start 2 processes, one for each gpus, and communicate with a master process to share and upadte gradients and weights.
+After discussing this with L. Baraldi, he gave us 2 more GPUs for a single account and then proceeded with only the multi-gpu training over 4 GPUs, but still the multi-node support was terminated them it can be used if needed.
+
 \subsection{Results}
 To evaluate the results we use different metrics: L1 error, PSNR, SSIM, LPIPS and FID. We conducted the test with CelebA-HQ Dataset so we can compare our results with DeepGin results.
 \textbf{TODO: TABELLA CON RISULTATI}

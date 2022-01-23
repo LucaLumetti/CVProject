@@ -4,45 +4,45 @@ The top-level auxiliary file: cvproject.aux
 The style file: plain.bst
 Database file #1: cvproject.bib
 Warning--empty year in gatys1508neural
-You've used 10 entries,
+You've used 11 entries,
             2118 wiz_defined-function locations,
-            549 strings with 5878 characters,
-and the built_in function-call counts, 3777 in all, are:
-= -- 367
-> -- 205
-< -- 4
-+ -- 82
-- -- 70
-* -- 244
-:= -- 622
-add.period$ -- 32
-call.type$ -- 10
-change.case$ -- 65
+            553 strings with 6065 characters,
+and the built_in function-call counts, 4390 in all, are:
+= -- 427
+> -- 238
+< -- 5
++ -- 95
+- -- 82
+* -- 287
+:= -- 710
+add.period$ -- 35
+call.type$ -- 11
+change.case$ -- 74
 chr.to.int$ -- 0
-cite$ -- 11
-duplicate$ -- 152
-empty$ -- 268
-format.name$ -- 70
-if$ -- 800
+cite$ -- 12
+duplicate$ -- 177
+empty$ -- 312
+format.name$ -- 82
+if$ -- 936
 int.to.chr$ -- 0
-int.to.str$ -- 10
-missing$ -- 10
-newline$ -- 53
-num.names$ -- 20
-pop$ -- 77
+int.to.str$ -- 11
+missing$ -- 11
+newline$ -- 58
+num.names$ -- 22
+pop$ -- 89
 preamble$ -- 1
-purify$ -- 55
+purify$ -- 63
 quote$ -- 0
-skip$ -- 119
+skip$ -- 142
 stack$ -- 0
-substring$ -- 183
-swap$ -- 50
-text.length$ -- 4
+substring$ -- 228
+swap$ -- 63
+text.length$ -- 5
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 40
+type$ -- 44
 warning$ -- 1
-while$ -- 32
-width$ -- 12
-write$ -- 108
+while$ -- 37
+width$ -- 13
+write$ -- 119
 (There was 1 warning)
