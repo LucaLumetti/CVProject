@@ -247,7 +247,11 @@ in order to compare our results with DeepGIN.
 \subsection{Architecture}
 Our architecture is highly inspired by Free Form Image Inpainting with Gated
 Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
-Our net is composed of two stages: Coarse Network and Refine Network.
+A mixed-precision training is used to train the network, to be more precise,
+\textbf{O2} option of nvidia-apex
+(https://nvidia.github.io/apex/amp.html\#o2-almost-fp16-mixed-precision) has
+been used on both discriminator and generator.
+Our generator net is composed of two stages: Coarse Network and Refine Network.
 \subsubsection{Coarse Network}
 In this stage we decided to use the gated convolution so that the generator is
 able to learn a dynamic feature selection mechanism for each channel and for
@@ -294,9 +298,13 @@ As said before the benefits of using this operation is that the network is able 
 As shown in \textbf{[Inserire riferimento alla figura]} the coarse net is charaterized by an initial downsampling phase, followed by a convolutional one and at the end there is and upsampling phase using the dilated gated convolution that could be seen as a gated convolution operation preceded by a resize operation. The output of the coarse net will pass through an activation function (we chose a \(\tanh\)) and the result will be given as input to the refinement network.
 \subsubsection{Refine Network}
 The second generator take the output of the coarse net and the mask and it's useful for refinement the image.
-In this stage there are 4 ResNet blocks with different dilation and some gated convolutional layers.
-This modified ResNet blocks are called Spatial Pyramid Dilation(SPD). This layer is composed of different convolutional blocks with different dilation, and the output of these blocks is concatenated together. With different value of dilation rate we can take information from a bigger receptive field.
-\includegraphics[width=1\linewidth]{img/ResNetSPD.png}
+In this stage there are 4 custom ResNet blocks with different dilation and some gated convolutional layers.
+This modified ResNet blocks are called Spatial Pyramid Dilation (SPD) (Figure \ref{fig:rnspd}). This layer is composed of different convolutional blocks with different dilation, and the output of these blocks is concatenated together. With different value of dilation rate we can take information from a bigger receptive field.
+\begin{figure}
+  \includegraphics[width=1\linewidth]{img/ResNetSPD.jpg}
+  \caption{ResNetSPD block used in the coarse network}
+  \label{fig:rnspd}
+\end{figure}
 Another useful feature that is implemented in this net is the Multi Scale Self Attention (MSSA). The MSSA using the self-similarity between different layers and it's helpful to have a better coherence in the final image. We are control the self-similarity with three different scale: 16x16, 32x32, 64x64.
 The central layer are composed of self attention block. We use standard convolutional layer to reduce the size before the self attention. In this manner we avoid an excessive increase of the parameters. With self attention we can find a better correlation between feature and we have a better reconstruction.
 \subsubsection{Discriminator}
