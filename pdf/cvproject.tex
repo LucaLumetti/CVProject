@@ -51,11 +51,11 @@ Matteo Di Bartolomeo\\
   the covered part of the face. To have a more precise reconstruction of the
   missing parts (mouth and nose) behind the mask, we plan to use a second photo
   of the same person without the mask as a reference during the facial
-  reconstruction process. There are no constraints on the quality of the
-  reference photo, for instance the face can be taken from a different point of
-  view than the first one. To sum up, given as input an image containing a
+  reconstruction process. There are no constraints on the features of the
+  reference photo, for instance the face can have a different yaw than the first one.
+  To sum up the pipeline, given as input an image containing a
   person’s face partially covered by a medical mask and another photo of the
-  same person without any occlusions, the output will be the first image with
+  same person without any occlusion, the output will be the first image with
   the mask-covered parts, mouth and nose, reconstructed. Future development
   could lead to generalizing the occlusion caused by the mask to any type of
   occlusion possible.
@@ -68,25 +68,36 @@ library to find facial landmarks over the face covered with the surgical mask
 and the reference photo. Facial landmarks are important to have an initial
 approximation of the region where to search the surgical mask and to warp the
 reference photo over the first one. To perform the segmentation of the mask we
-apply a k-means with k=3 over the polygon we created using face landmarks and
+apply a k-means with k=3 over the polygon we created using specific face landmarks and
 pick the bigger region between the 3.  The k has been choosen to be 3 as in the
 polygonal region we expect to find the mask, the background and the skin of the
 person's face. In the end, a binary image is created, with a 1 where the mask is
 present and 0 elsewhere, while in the original image, the mask area is filled
 with 0s.
+\begin{figure}
+  \caption{Frontal image with landmarks on the left, resulting mask of the surgical mask on the right.}
+  \includegraphics[width=0.49\linewidth]{img/landmarks_front.jpeg}
+  \includegraphics[width=0.49\linewidth]{img/dilated.jpeg}
+\end{figure}
 
 \section{Warping the reference photo}
 The objective of the reference photo is to guide the network to a more loyal
-reconstruction. As we allow the reference to have [avere un'angolazione diversa
-da quella frontale], we apply a thin-plate spline transformation to make it frontal
-[meh che traduzione brutta]. We use 30 specific landmarks as parameters as using
-more parameters lead to distortion given by the error in the landmarks detection
-and less lead to an imperfect warping. The same polygon region of Mask
-Segmentation is cut from the reference photo, the by applying the TPS is sticked
+reconstruction, by giving some informations on how the mouth and close parts should look.
+As we allow the reference to have a yawn different than frontal,
+we apply a thin-plate spline transformation to adjust it.
+We use 30 specific landmarks as parameters as using
+more of them lead to distortions given by the errors in the landmarks detection
+while less lead to an imperfect warping. The same polygon region of Mask
+Segmentation is cut from the reference photo, the by applying the TPS it is sticked
 to to main photo leading to a (partial) reconstruction.
+The image will then be feeded to the network which will reconstruct the missing parts.
+\begin{figure}
+  \caption{Reference photo with landmarks found by mediapipe on the left, resulting image on the right.}
+  \includegraphics[width=0.49\linewidth]{img/landmarks_lateral.jpeg}
+  \includegraphics[width=0.49\linewidth]{img/result.jpg}
+\end{figure}
 
 \section{Image inpainting}
-
 Image inpainting (a.k.a. image completion) is the task to fill a missing region
 in an image by predicting the value of the missing pixels in order to have a
 realistic image which is semantically close to the original one and visually correct.
@@ -185,16 +196,30 @@ where \(C_l\) refers to the number of activation maps of the \(l^{th}\) layer of
 Using the same 5 levels of the previous loss, it is the sum of the distances of the auto-correlation matrixes between the output and the ground truth multiplied by a factor that depends on the size and number of the activation maps in those layers. Its weigth is set to \(40\).
 
 \subsubsection{Contrastive loss.}
-\begin{equation}
+\begin{equation}\label{eq:contra}
     \resizebox{.47 \textwidth}{!}{%
     $\mathcal{L}_{contrastive} = - \log{\frac{exp(z_{i}^\intercal z_{i}^{'}/\tau)}{\sum_{j=0}^{K}exp(z_{i}z_{j}^{'}/\tau)}}
     $%
     }
 \end{equation}
-The equation \eqref{eq:8} \cite{le2020contrastive} is the categorical cross-entropy of classifying the positive sample correctly\cite{oord2018representation}. \((z_{i}, z_{i}^{'})\) are the encoding version of the images \((x_{q}, x_{k})\), where \(x_{q}\)is the original image and \(x_{k}\) is the trasformated image. \(\tau\) is an hyper-parameter that control the sensitivity of the product and it's called temperature. The dot product between the encoding vector of the original image and the traformated image measure the similarity between rappresentations. In our network the positive images are created by the original images with some transformations and we don't use negative examples.
-This loss is helpful to get more information during the training because the network learns from the similarity between images. This methods try to maximise similarity between representations of positive similar pairs and minimises the similarity with the feature extracted from negative images\cite{le2020contrastive}.
-To calculate this loss we use the feature vector with the biggest number of channels in our network (512). We squeeze this vector in a way that preserve the information of the original image with average pooling so we use a vector with dimension 1x1x512.
-The transformations used are inspired by StyleGAN\cite{karras2020analyzing} and they are:
+The equation \eqref{eq:contra} is the categorical cross-entropy of classifying
+the positive sample correctly \cite{oord2018representation}. \((z_{i},
+z_{i}^{'})\) are the encoding version of the images \((x_{q}, x_{k})\), where
+\(x_{q}\)is the original image and \(x_{k}\) is the trasformated image. \(\tau\)
+is an hyper-parameter that control the sensitivity of the product and it's
+called temperature. The dot product between the encoding vector of the original
+image and the traformated image measure the similarity between rappresentations.
+In our network the positive images are created by the original images with some
+transformations and we don't use negative examples. This loss is helpful to get
+more information during the training because the network learns from the
+similarity between images. This methods try to maximise similarity between
+representations of positive similar pairs and minimises the similarity with the
+feature extracted from negative images\cite{le2020contrastive}.
+To calculate this loss we use the feature vector with the biggest number of
+channels in our network (512). We squeeze this vector in a way that preserve the
+information of the original image with average pooling so we use a vector with
+dimension 1x1x512. The transformations used are inspired by
+StyleGAN\cite{karras2020analyzing} and they are:
 \begin{itemize}
   \item horizontal flip with probability 1.0
   \item change in brightness with probability 0.75
