@@ -42,7 +42,7 @@ def find_facial_landmarks(img, landmarks=[], debug=False):
     mpDraw = mp.solutions.drawing_utils
     mpFaceMesh = mp.solutions.face_mesh
     faceMesh = mpFaceMesh.FaceMesh(max_num_faces=1)
-    drawSpec = mpDraw.DrawingSpec(thickness=1, circle_radius=1)
+    drawSpec = mpDraw.DrawingSpec(color=(255, 0, 0), thickness=1, circle_radius=1)
 
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = faceMesh.process(imgRGB)
@@ -69,6 +69,7 @@ def find_facial_landmarks(img, landmarks=[], debug=False):
             keypoints.append((xc, yc))
     if debug:
         cv2.imshow('landmarks', img_land)
+        cv2.imwrite('landmarks_front.jpeg', img_land)
         cv2.waitKey(0)
     return keypoints
 
@@ -141,7 +142,7 @@ def find_mask(img, debug=True  ):
     eroded = cv2.erode(closing, kernel, iterations=5)
 
     # dilation
-    dilated = cv2.dilate(eroded, kernel, iterations=10)
+    dilated = cv2.dilate(eroded, kernel, iterations=6)
 
     if debug:
         cv2.imshow('polygon', mask)
@@ -162,6 +163,7 @@ def find_mask(img, debug=True  ):
         cv2.imshow('eroded', eroded*255)
         cv2.waitKey(0)
         cv2.imshow('dilated', dilated*255)
+        cv2.imwrite('dilated.jpeg', dilated*255)
         cv2.waitKey(0)
 
     return dilated

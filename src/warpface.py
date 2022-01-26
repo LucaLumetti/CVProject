@@ -90,20 +90,20 @@ def trasformation_image(dst, cropped_img, lnd_src, lnd_dst):
     norm_lnd_dst[:,1] /= dst.shape[0]
 
     src_adapting = warp_image_cv(cropped_img, norm_lnd_src, norm_lnd_dst)
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
 
-    lnd_dst = np.around(lnd_dst)
-    lnd_dst = lnd_dst.astype(int)
+    # lnd_dst = np.around(lnd_dst)
+    # lnd_dst = lnd_dst.astype(int)
 
-    hullIndex = cv2.convexHull(np.array(lnd_dst), returnPoints=False)
+    # hullIndex = cv2.convexHull(np.array(lnd_dst), returnPoints=False)
 
-    lnd = []
+    # lnd = []
 
-    for c in range(0, len(hullIndex)):
-        lnd.append(lnd_dst[int(hullIndex[c])])
+    # for c in range(0, len(hullIndex)):
+    #     lnd.append(lnd_dst[int(hullIndex[c])])
 
-    base = np.copy(dst).astype(np.uint8)
-    cv2.fillConvexPoly(base, np.int32(lnd), (0, 0, 0), 16, 0)
+    # base = np.copy(dst).astype(np.uint8)
+    # cv2.fillConvexPoly(base, np.int32(lnd), (0, 0, 0), 16, 0)
 
     # output = base+src_adapting
 
@@ -113,6 +113,13 @@ def trasformation_image(dst, cropped_img, lnd_src, lnd_dst):
     # r = cv2.boundingRect(np.float32([lnd]))
     # center = ((r[0] + int(r[2] / 2), r[1] + int(r[3] / 2)))
     # output = cv2.seamlessClone(np.uint8(src_adapting), base, mask, center, cv2.NORMAL_CLONE)
+    # M = np.float32([
+    #     [1, 0, -26],
+    #     [0, 1, 0]
+    # ])
+    # src_adapting = src_adapting + cv2.warpAffine(cv2.flip(src_adapting, 1), M, (src_adapting.shape[1], src_adapting.shape[0]))
+    # cv2.imshow('src_adapting', src_adapting)
+    # cv2.waitKey(0)
     return src_adapting
 
 # would maybe be better if we take from lateral as much as we can to cover the
@@ -125,26 +132,32 @@ def warp_face(front, lateral, debug=False):
     mpDraw = mp.solutions.drawing_utils
     mpFaceMesh = mp.solutions.face_mesh
     frontalFaceMesh = mpFaceMesh.FaceMesh(max_num_faces=1)
-    drawSpec = mpDraw.DrawingSpec(thickness=1, circle_radius=1)
+    drawSpec = mpDraw.DrawingSpec(color=(255,0,0),thickness=1, circle_radius=1)
     lateralFaceMesh = mpFaceMesh.FaceMesh(max_num_faces=1)
 
     # process
+    front = cv2.cvtColor(front, cv2.COLOR_BGR2RGB)
+    # lateral = cv2.cvtColor(lateral, cv2.COLOR_BGR2RGB)
     front_kp = frontalFaceMesh.process(front)
     lateral_kp = lateralFaceMesh.process(lateral)
+
+    print(front_kp)
+    # print(lateral_kp.multi_face_landmarks)
 
     front_lms = front_kp.multi_face_landmarks[0]
     lateral_lms = lateral_kp.multi_face_landmarks[0]
 
     # # draw landmarks on image for debug purpose
     # front_marked = np.copy(front)
-    # lateral_marked = np.copy(lateral)
+    lateral_marked = np.copy(lateral)
     # mpDraw.draw_landmarks(front_marked, front_lms, {}, drawSpec, drawSpec)
-    # mpDraw.draw_landmarks(lateral_marked, lateral_lms, {}, drawSpec, drawSpec)
+    mpDraw.draw_landmarks(lateral_marked, lateral_lms, {}, drawSpec, drawSpec)
 
     # cv2.imshow('front_marked', front_marked)
     # cv2.waitKey(0)
-    # cv2.imshow('lateral_marked', lateral_marked)
-    # cv2.waitKey(0)
+    cv2.imshow('lateral_marked', lateral_marked)
+    cv2.imwrite('landmarks_lateral.jpeg', lateral_marked)
+    cv2.waitKey(0)
 
     # better structure for landmarks coords
     # TODO: high changes this can be useless and/or can be improved by a lot
