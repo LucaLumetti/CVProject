@@ -81,14 +81,26 @@ if __name__ == '__main__':
     parser.add_argument("--output_dir", type=str, help="where to save some test img", required=True)
     args = parser.parse_args()
 
+    # Load dataset
     dataset = FaceMaskDataset(args.dataset_dir, 'maskceleba_test.csv', T.Resize(args.input_size))
     dataloader = dataset.loader(batch_size=args.batch_size)
 
-    netG = MSSAGenerator(input_size=args.input_size).to(device)
-    netD = Discriminator(input_size=args.input_size).to(device)
+    netG = MSSAGenerator(input_size=args.input_size)
+    netD = Discriminator(input_size=args.input_size)
 
-    netG.load_state_dict(torch.load(f'{args.checkpoint_dir}/generator.pt', map_location=device))
-    netD.load_state_dict(torch.load(f'{args.checkpoint_dir}/discriminator.pt', map_location=device))
+    netG.cuda(gpu)
+    netD.cuda(gpu)
+
+    netG, netD = amp.initialize(netG, netD, opt_level='O2')
+
+    netG = DDP(netG, device_ids=[gpu])
+    netD = DDP(netD, device_ids=[gpu])
+
+    checkpointG = torch.load(f'{args.checkpoint_dir}/generator.pt')
+    checkpointD = torch.load(f'{args.checkpoint_dir}/discriminator.pt')
+
+    netG.load_state_dict(checkpointG)
+    netD.load_state_dict(checkpointD)
 
     metrics = test(netG, netD, dataloader, args)
     print(metrics)
