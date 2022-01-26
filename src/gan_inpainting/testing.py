@@ -8,6 +8,7 @@ from generator import *
 from discriminator import Discriminator
 from loss import *
 from metrics import TestMetrics
+from apex import amp
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -88,13 +89,10 @@ if __name__ == '__main__':
     netG = MSSAGenerator(input_size=args.input_size)
     netD = Discriminator(input_size=args.input_size)
 
-    netG.cuda(gpu)
-    netD.cuda(gpu)
+    netG.cuda()
+    netD.cuda()
 
     netG, netD = amp.initialize(netG, netD, opt_level='O2')
-
-    netG = DDP(netG, device_ids=[gpu])
-    netD = DDP(netD, device_ids=[gpu])
 
     checkpointG = torch.load(f'{args.checkpoint_dir}/generator.pt')
     checkpointD = torch.load(f'{args.checkpoint_dir}/discriminator.pt')
