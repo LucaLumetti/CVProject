@@ -318,8 +318,34 @@ Every account could start 2 processes, one for each gpus, and communicate with a
 After discussing this with L. Baraldi, he gave us 2 more GPUs for a single account and then proceeded with only the multi-gpu training over 4 GPUs, but still the multi-node support was terminated them it can be used if needed.
 
 \subsection{Results}
-To evaluate the results we use different metrics: L1 error, PSNR, SSIM, LPIPS and FID. We conducted the test with CelebA-HQ Dataset so we can compare our results with DeepGin results.
-\textbf{TODO: TABELLA CON RISULTATI}
+To evaluate the results we use different metrics: L1 error, PSNR, SSIM, LPIPS
+and FID. We conducted the test with CelebA 256 Dataset and compared the results
+with different inpainting network. It must be noted that our network is the only
+one who is restricted to inpaint a specific part of an image of a human face and also the mask
+is pretty large compared to others. There are no network out there which perform our same specific tasks.
+\begin{center}
+  \begin{tabular}{ |c|c|c|c|c|c| }
+    \hline
+    Method & PSNR & SSIM & L1 & FID & LPIPS \\
+    \hline
+    DeepFillv2 (FFHQ) & 22.52 & 0.845 & 12.029  & 19.336  & 0.128 \\
+    DeepGIN (FFHQ)    & 24.36 & 0.867 & 9.797   & 37.577  & 0.142 \\
+    FFM (CelebA)      & 23.52 & 0.84  & n.d.    & n.d     & n.d. \\
+    DIP (CelebA)      & 25.46 & 0.85  & n.d.    & n.d.    & n.d. \\
+    Ours (CelebA)     & 0     & 0     & 0       & 0       & 0 \\
+  \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Conclusion}
+Our results are close to the state-of-the-art and we think that they can
+be improved by training the network for more time and more data. Some of the networks we have compared
+had ~10x more epochs and used more training data. We couldn't afford that as the time and
+computing resource were not feasible for us.\\
+This network is also the first one which has a really specific inpainting tasks so it
+can be considered quite different from other, which have to generalize to a
+larger domain. It is also interesting to note that our network perform good even
+if the mask is way bigger that the one used in other networks.
 
 %------------------------------------------------------------------------
 
