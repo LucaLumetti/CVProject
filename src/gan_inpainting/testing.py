@@ -32,7 +32,7 @@ def test(netG, netD, dataloader, args):
             masks = masks / 1
 
             # forward G
-            coarse_out, refined_out = netG(imgs,masks)
+            _, coarse_out, refined_out = netG(imgs,masks)
             reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
             pos_neg_imgs = torch.cat([imgs,reconstructed_imgs],dim=0)
@@ -89,13 +89,18 @@ if __name__ == '__main__':
     netG = MSSAGenerator(input_size=args.input_size)
     netD = Discriminator(input_size=args.input_size)
 
-    netG.cuda()
-    netD.cuda()
 
-    netG, netD = amp.initialize(netG, netD, opt_level='O2')
+    netG.to(device)
+    netD.to(device)
 
-    checkpointG = torch.load(f'{args.checkpoint_dir}/generator.pt')
-    checkpointD = torch.load(f'{args.checkpoint_dir}/discriminator.pt')
+    netG = torch.nn.DataParallel(netG)
+    netD = torch.nn.DataParallel(netD)
+
+    # netG, _ = amp.initialize(netG, None, opt_level='O2')
+    # netD, _ = amp.initialize(netD, None, opt_level='O2')
+
+    checkpointG = torch.load(f'{args.checkpoint_dir}/generator.pt', map_location=torch.device('cpu'))
+    checkpointD = torch.load(f'{args.checkpoint_dir}/discriminator.pt', map_location=torch.device('cpu'))
 
     netG.load_state_dict(checkpointG)
     netD.load_state_dict(checkpointD)
