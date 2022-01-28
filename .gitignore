@@ -19,6 +19,3 @@ __pycache__
 *.aux
 *.bbl
 list.txt
-*.jpeg
-*.jpg
-*.png
