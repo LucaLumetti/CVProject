@@ -12,6 +12,9 @@ from apex import amp
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+def infer(img):
+    pass
+
 def test(netG, netD, dataloader, args):
     netG.eval()
     netD.eval()
@@ -89,15 +92,11 @@ if __name__ == '__main__':
     netG = MSSAGenerator(input_size=args.input_size)
     netD = Discriminator(input_size=args.input_size)
 
-
     netG.to(device)
     netD.to(device)
 
     netG = torch.nn.DataParallel(netG)
     netD = torch.nn.DataParallel(netD)
-
-    # netG, _ = amp.initialize(netG, None, opt_level='O2')
-    # netD, _ = amp.initialize(netD, None, opt_level='O2')
 
     checkpointG = torch.load(f'{args.checkpoint_dir}/generator.pt', map_location=torch.device('cpu'))
     checkpointD = torch.load(f'{args.checkpoint_dir}/discriminator.pt', map_location=torch.device('cpu'))
@@ -106,4 +105,4 @@ if __name__ == '__main__':
     netD.load_state_dict(checkpointD)
 
     metrics = test(netG, netD, dataloader, args)
-    print(metrics)
+  
