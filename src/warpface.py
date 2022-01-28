@@ -90,7 +90,7 @@ def trasformation_image(dst, cropped_img, lnd_src, lnd_dst):
     norm_lnd_dst[:,1] /= dst.shape[0]
 
     src_adapting = warp_image_cv(cropped_img, norm_lnd_src, norm_lnd_dst)
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
 
     lnd_dst = np.around(lnd_dst)
     lnd_dst = lnd_dst.astype(int)

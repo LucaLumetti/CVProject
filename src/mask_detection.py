@@ -12,7 +12,7 @@ def get_image(pathname):
     img_height, img_width, img_channels = img.shape
     img_area = img_height*img_width
     img = resize_with_ratio(img,height=720)
-    cv2.imshow('original', img)
+    # cv2.imshow('original', img)
     cv2.waitKey(0)
     return img
 
@@ -100,7 +100,7 @@ def color_quantization(img, bins=2, debug=False):
 # Function that given an img return a binary mask (np.array) of the surgical
 # mask detected in the image img. If facial landmarks are not detected, return
 # an empty np.array.
-def find_mask(img, debug=True  ):
+def find_mask(img, debug=False, save_mask=None):
 
     # Keypoints detection
     keypoints = find_facial_landmarks(img, debug=debug)
@@ -146,23 +146,31 @@ def find_mask(img, debug=True  ):
     if debug:
         cv2.imshow('polygon', mask)
         cv2.waitKey(0)
+
         cv2.imshow('mask', out)
         cv2.waitKey(0)
+
         cv2.imshow('blur', img)
         cv2.waitKey(0)
+
         cv2.imshow('hsv to gray', res)
         cv2.waitKey(0)
-        # plt.subplot(221)
-        # plt.plot(hist)
-        # plt.show()
+
         cv2.imshow('threshold', thresh*255)
         cv2.waitKey(0)
+
         cv2.imshow('closing', closing*255)
         cv2.waitKey(0)
+
         cv2.imshow('eroded', eroded*255)
         cv2.waitKey(0)
+
         cv2.imshow('dilated', dilated*255)
         cv2.waitKey(0)
+
+    if(save_mask is not None):
+        print("Saving dilated image (binary mask)...")
+        cv2.imwrite(save_mask, dilated*255)
 
     return dilated
 
