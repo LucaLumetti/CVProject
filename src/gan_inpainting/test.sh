@@ -1,10 +1,10 @@
 #!/bin/bash
 
-for i in $(seq -w 00100); do
-  echo "processing $i.jpg"
+for i in $(seq -w 00999); do
+  echo "processing $i.png"
   python inference.py \
-  --input_img /nas/softechict-nas-1/llumetti/CELEBA_MASK/celeba_hq_256/00000/$i.jpg \
-  --input_mask /nas/softechict-nas-1/llumetti/CELEBA_MASK/masked_images/00000/$i.jpg \
-  --output samples/$i.jpg \
+  --input_mask /home/luca/university/cv/project/src/dataset/masked_images/00000/$i.png \
+  --input_img /home/luca/university/cv/project/src/dataset/FFHQ/00000/$i.png \
+  --output samples/ffhq/$i.jpg \
   --checkpoint_dir ~/gin
 done

@@ -46,12 +46,16 @@ if __name__ == '__main__':
     netG = load_network(f'{args.checkpoint_dir}/generator.pt')
 
     with torch.inference_mode():
-        print("Loading input image...")
+        print(f"Loading input image ({args.input_img})...")
         img = read_image(args.input_img)
+        img = T.Resize(256)(img)
         print("loaded img: ", img.shape)
-        print("Loading input mask...")
+
+        print(f"Loading input mask({args.input_mask})...")
         mask = read_image(args.input_mask, ImageReadMode.GRAY)
+        mask = T.Resize(256)(mask)
         print("loaded mask: ", mask.shape)
+
         print("Processing image...")
         out_img = infer(img, mask, netG)
 
