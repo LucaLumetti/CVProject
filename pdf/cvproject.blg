@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99d (TeX Live 2021/Arch Linux)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: cvproject.aux
+The style file: plain.bst
+Database file #1: cvproject.bib
+Warning--empty year in gatys1508neural
+You've used 11 entries,
+            2118 wiz_defined-function locations,
+            553 strings with 6065 characters,
+and the built_in function-call counts, 4390 in all, are:
+= -- 427
+> -- 238
+< -- 5
++ -- 95
+- -- 82
+* -- 287
+:= -- 710
+add.period$ -- 35
+call.type$ -- 11
+change.case$ -- 74
+chr.to.int$ -- 0
+cite$ -- 12
+duplicate$ -- 177
+empty$ -- 312
+format.name$ -- 82
+if$ -- 936
+int.to.chr$ -- 0
+int.to.str$ -- 11
+missing$ -- 11
+newline$ -- 58
+num.names$ -- 22
+pop$ -- 89
+preamble$ -- 1
+purify$ -- 63
+quote$ -- 0
+skip$ -- 142
+stack$ -- 0
+substring$ -- 228
+swap$ -- 63
+text.length$ -- 5
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 44
+warning$ -- 1
+while$ -- 37
+width$ -- 13
+write$ -- 119
+(There was 1 warning)
