@@ -400,59 +400,70 @@ that create the image z.
 
 \subsection{Multi-GPU and Multi-Node Training}
 % Da rivedere
-The network has been designed to be trained on multi-GPUs and multi-nodes, as
-during the development we have understood that a single Nvidia K80  we could use
-a maximum batch size of 1 (which became 2 after the data augmentation). Our
-first idea to overcome this problem was to use 2 Nvidia K80 as these are the
-resource given by AImagelab server for this project. This brings our maximum
-batch size to 3 (which became 6 after data augmentation). Still we weren't happy
-as in 24 hours we could't complete a full epoch. Second idea was to exploit the
-fact that we had 3 accounts and each of them could use 2 GPUs and the same time,
-so we basically had 6 GPUs in total, could we use all of them at the sime
-time?\\
-% WEIRD FLEX?
-We started to develop multi-node training and each account was seen as a single
-node. Every account could start 2 processes, one for each gpus, and communicate
-with a master process to share and upadte gradients and weights. After
-discussing this with L. Baraldi, he gave us 2 more GPUs for a single account and
-then proceeded with only the multi-gpu training over 4 GPUs, but still the
-multi-node support was terminated them it can be used if needed.
+As GAN networks are heavy to train, we decided to design the whole network to be
+trainable on multi GPU and multi node architectures. Training it on a single K80
+was infeasible as a batch size greater that 2 gives CUDA out of memory error.
+We end up using 4 GPU K80 in parallel that let us to complete a full epoch in
+under 24h (which is the time limit on AImageLab's servers). We also give support
+for multi node because even if we were on the same node, we initially could use
+at most 2 GPUs per account, so every account could be seen as a different node
+thus we could break the GPUs limit. Anyway as our max GPU per users were
+upgraded to 4, we didn't use that technique.
 
 \subsection{Results}
 To evaluate the results (Table \ref{tab:results}) we use different metrics:
 PSNR, SSIM, LPIPS and FID. We conducted the test with CelebA 256 Dataset and
 compared the results with different inpainting network. It must be noted that
 our network is the only one who is restricted to inpaint a specific part of an
-image of a human face and also the mask is pretty large compared to others.
+image of a human face, others generalize
 There are no network out there which perform our same specific tasks.
 \begin{table}
   \begin{tabular}{|c|c|c|c|c|c|}
     \hline
     Method & PSNR & SSIM & FID & LPIPS \\
     \hline
-    DeepFillv2 (FFHQ) & 22.52 & 0.845 & 19.336  & 0.128 \\
-    DeepGIN (FFHQ)    & 24.36 & 0.867 & 37.577  & 0.142 \\
-    FFM (CelebA)      & 23.52 & 0.84  & n.d.    & n.d. \\
-    DIP (CelebA)      & 25.46 & 0.85  & n.d.    & n.d. \\
-    Ours (CelebA)     & 0     & 0     & 0       & 0 \\
+    DeepFillv2 (FFHQ) & 29.70 & 0.72 & 75.56 & 0.29 \\
+    DIP (CelebA)      & 25.46 & 0.85 & n.d. & n.d. \\
+    Ours (CelebA)     & 58.95 & 0.88 & 151.95 & 0.23\\
   \hline
   \end{tabular}
   \\
-  \caption{Results of the tests and comparisions}
+  \caption{Comparison with different network on the same metrics}
   \label{tab:results}
 \end{table}
 
-\subsection{Conclusion}
-Our results are close to the state-of-the-art and we think that they can be
-improved by training the network for more time and more data. Some of the
-networks we have compared had \~10x more epochs and used more training data. We
-couldn't afford that as the time and computing resource were not feasible for
-us.\\ This network is also the first one which has a really specific inpainting
-tasks so it can be considered quite different from other, which have to
-generalize to a larger domain. It is also interesting to note that our network
-perform good even if the mask is way bigger that the one used in other networks.
+Results are not that bad, FID is pretty high and we think that this is due to
+some artifacts that often appears in the generated regions.
+In the Table \ref{tab:photos} we show some of the generated images.
+\begin{table}
+  \begin{tabular}{cccc}
+    \includegraphics[width=.24\linewidth]{samples/00045.jpg}&
+    \includegraphics[width=.24\linewidth]{samples/00053.jpg}&
+    \includegraphics[width=.24\linewidth]{samples/00099.jpg}&
+    \includegraphics[width=.24\linewidth]{samples/00146.jpg}\\
+    \includegraphics[width=.24\linewidth]{samples/00202.jpg}&
+    \includegraphics[width=.24\linewidth]{samples/00298.jpg}&
+    \includegraphics[width=.24\linewidth]{samples/00353.jpg}&
+    \includegraphics[width=.24\linewidth]{samples/00708.jpg}\\
+    \includegraphics[width=.24\linewidth]{samples/recon_600.png}&
+    \includegraphics[width=.24\linewidth]{samples/recon_900.png}&
+    \includegraphics[width=.24\linewidth]{samples/aug_recon_1600.png}&
+    \includegraphics[width=.24\linewidth]{samples/aug_recon_200.png}\\
+\end{tabular}
+  \label{tab:photos}
+  \caption{Some of the generated images, the latter two were augmented before
+  feeding them to the network.}
+\end{table}
 
-%------------------------------------------------------------------------
+\subsection{Conclusion}
+Our results are not too far to the state-of-the-art and we think that they can be
+improved by training the network for more time and more data. Some of the
+networks we have compared had \~10x more epochs and used a lot more training data (CelebA + FFHQ + StyleGAN).
+We couldn't afford that as the time and computing resource were not feasible for
+us.\\ This network is also differ from the other because it has a specific inpainting
+tasks, while the other networks have to generalize to a larger domain.
+
+%% ALTRO?
 
 {\small
 \bibliographystyle{plain}
