@@ -34,10 +34,11 @@ class Generator(nn.Module):
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 # atrous
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(self.size//4, 3, 1, 2)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(self.size//4, 3, 1, 4)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(self.size//4, 3, 1, 8)),
@@ -145,10 +146,11 @@ class MSSAGenerator(nn.Module):
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, padding=get_pad(self.size//4, 3, 1)),
                 # atrous
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
-                # MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+                MultiDilationResnetBlock8(4*self.cnum, 4*self.cnum),
+
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=2, padding=get_pad(self.size//4, 3, 1, 2)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=4, padding=get_pad(self.size//4, 3, 1, 4)),
                 GatedConv(4*self.cnum, 4*self.cnum, 3, 1, dilation=8, padding=get_pad(self.size//4, 3, 1, 8)),
@@ -196,13 +198,15 @@ class MSSAGenerator(nn.Module):
                 nn.LeakyReLU(0.2, True),
                 SelfAttention(self.cnum*4)
                 )
-        self.middle = nn.Sequential(
+        self.middle1 = nn.Sequential(
                 self.pad(1),
                 nn.Conv2d(self.cnum*8, self.cnum*16, 4, 2, padding=0),
                 nn.LeakyReLU(0.2, True),
                 MultiDilationResnetBlock4(self.cnum*16, self.cnum*16, 3, 1, 1),
                 MultiDilationResnetBlock4(self.cnum*16, self.cnum*16, 3, 1, 1),
                 MultiDilationResnetBlock4(self.cnum*16, self.cnum*16, 3, 1, 1),
+                )
+        self.middle2 = nn.Sequential(
                 SelfAttention(self.cnum*16),
                 MultiDilationResnetBlock4(self.cnum*16, self.cnum*16, 3, 1, 1),
                 MultiDilationResnetBlock4(self.cnum*16, self.cnum*16, 3, 1, 1),
@@ -242,6 +246,7 @@ class MSSAGenerator(nn.Module):
                 self.pad(3),
                 nn.Conv2d(self.cnum, 3, 7, 1, padding=0),
                 )
+        self.avgpool = nn.AvgPool2d(16)
 
     def forward(self, input_images, input_masks):
         # coarse
@@ -259,7 +264,9 @@ class MSSAGenerator(nn.Module):
         x3 = self.c3(x) # 64x64x128
         x4 = self.c4(x3) # 32x32x256
 
-        x = self.middle(x4)   # 16x16x512
+        emb_repr = self.middle1(x4)   # 16x16x512
+        x = self.middle2(emb_repr)   # 16x16x512
+
         x3 = self.skip_c3(x3) # 64x64x64
         x4 = self.skip_c4(x4) # 32x32x32
 
@@ -273,9 +280,10 @@ class MSSAGenerator(nn.Module):
         x = self.end(x) # 256x256x3
         # x = torch.tanh(x)
 
+        emb_repr = self.avgpool(emb_repr).squeeze()
         refine_result = x
 
-        return coarse_result, refine_result
+        return emb_repr, coarse_result, refine_result
 
 if __name__ == '__main__':
     # remember samples x channels x height x width !

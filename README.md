@@ -47,4 +47,3 @@ python inference.py \
 
 ## Train and Testing
 To run the training and/or testing, is possible to use `run.sh` and `test.sh` (even without SLURM). For multinode you have to modify the arguments inside the scripts accordingly.
-

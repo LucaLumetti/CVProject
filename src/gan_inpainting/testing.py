@@ -1,3 +1,4 @@
+import argparse
 import logging
 from config import Config
 from dataset import FaceMaskDataset
@@ -7,10 +8,14 @@ from generator import *
 from discriminator import Discriminator
 from loss import *
 from metrics import TestMetrics
+from apex import amp
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def test(netG, netD, dataloader):
+def infer(img):
+    pass
+
+def test(netG, netD, dataloader, args):
     netG.eval()
     netD.eval()
 
@@ -30,7 +35,7 @@ def test(netG, netD, dataloader):
             masks = masks / 1
 
             # forward G
-            coarse_out, refined_out = netG(imgs,masks)
+            _, coarse_out, refined_out = netG(imgs,masks)
             reconstructed_imgs = refined_out*masks + imgs*(1-masks)
 
             pos_neg_imgs = torch.cat([imgs,reconstructed_imgs],dim=0)
@@ -58,9 +63,11 @@ def test(netG, netD, dataloader):
 
             metrics_tester.update(imgs, reconstructed_imgs)
             for d in range(output.size(0)):
-                save_image(output[d]/255, f'{config.output_dir}/{i*config.batch_size+d}.png')
+                # needed to calculate FID
+                save_image(output[d]/255, f'{args.output_dir}/{i*args.batch_size+d}.png')
 
-        fid_score = metrics_tester.FID(config.test_dir, config.output_dir, config.batch_size,device)
+        # TODO test_dir is empty
+        fid_score = metrics_tester.FID(args.dataset_dir, args.output_dir, args.batch_size,device)
         metrics_dict = metrics_tester.get_metrics()
         metrics_dict['FID'] = fid_score
         for key in metrics:
@@ -69,18 +76,33 @@ def test(netG, netD, dataloader):
     return metrics_dict
 
 if __name__ == '__main__':
-    config = Config('config.json')
-    logging.basicConfig(filename='test_output.log', level=logging.INFO)
-    logging.debug(config)
+    parser = argparse.ArgumentParser(description="Testing")
+    parser.add_argument("--batch_size", default=2, type=int, help="batch size")
+    parser.add_argument("--input_size", default=256, type=int, help="size of the imgs")
+    parser.add_argument("--dataset_dir", type=str, help="dataset location", required=True)
+    parser.add_argument("--checkpoint_dir", type=str, help="where to load/save checkpoints", required=True)
+    # TODO
+    parser.add_argument("--output_dir", type=str, help="where to save some test img", required=True)
+    args = parser.parse_args()
 
-    dataset = FaceMaskDataset(config.test_dir, 'maskceleba_test.csv', T.Resize(config.input_size))
-    dataloader = dataset.loader(batch_size=config.batch_size)
+    # Load dataset
+    dataset = FaceMaskDataset(args.dataset_dir, 'maskceleba_test.csv', T.Resize(args.input_size))
+    dataloader = dataset.loader(batch_size=args.batch_size)
 
-    netG = MSSAGenerator(input_size=config.input_size).to(device)
-    netD = Discriminator(input_size=config.input_size).to(device)
+    netG = MSSAGenerator(input_size=args.input_size)
+    netD = Discriminator(input_size=args.input_size)
 
-    netG.load_state_dict(torch.load('models/generator.pt', map_location=device))
-    netD.load_state_dict(torch.load('models/discriminator.pt', map_location=device))
+    netG.to(device)
+    netD.to(device)
 
-    metrics = test(netG, netD, dataloader)
-    print(metrics)
+    netG = torch.nn.DataParallel(netG)
+    netD = torch.nn.DataParallel(netD)
+
+    checkpointG = torch.load(f'{args.checkpoint_dir}/generator.pt', map_location=torch.device('cpu'))
+    checkpointD = torch.load(f'{args.checkpoint_dir}/discriminator.pt', map_location=torch.device('cpu'))
+
+    netG.load_state_dict(checkpointG)
+    netD.load_state_dict(checkpointD)
+
+    metrics = test(netG, netD, dataloader, args)
+  
