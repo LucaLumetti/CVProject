@@ -4,37 +4,46 @@ The people involved in the project are:
 - Matteo Di Bartolomeo (241469@studenti.unimore.it)
 - Federico Silvestri (243938@studenti.unimore.it)
 
-## Overview
+## Installation
+TODO
 
-Our project aims to remove face masks over a person’s face, by reconstructing
-the covered part of the face. To have a more precise reconstruction of the missing
-parts (mouth and nose) behind the mask, we plan to use a second photo of the
-same person without the mask as a reference during the facial reconstruction
-process. There are no constraints on the quality of the reference photo, for
-instance the face can be taken from a different point of view than the first one.
-To sum up, given as input an image containing a person’s face partially covered
-by a medical mask and another photo of the same person without any occlusions,
-the output will be the first image with the mask-covered parts, mouth and nose,
-reconstructed.
-Future development could lead to generalizing the occlusion caused by the mask
-to any type of occlusion possible.
+## Run
+To run the whole pipeline over a single image or a pair image+reference, execute:
+```shellscript
+run.sh image.jpg [reference.jpg]
+```
+The output will be `output.jpg`
 
-## Pipeline
-The pipeline will be structured as follows:
-- Detect the mask in the first image by using classical image-processing operators, like edge detection and/or segmentation algorithms.
-- Fix face orientation in the reference image by using a geometric-based algorithm, like the thin-plate spline transformation.
-- Reconstruct the missing parts of the face in the first image by using a GAN network with a contrastive learning approach. (Deep learning network with a retrieval component)
+## Project structure
+There are 2 main folders, `pdf` and `src`. The first one contain the whole LaTeX code, images, etc... that were used to produce the [final report](https://github.com/LucaLumetti/CVProject/blob/main/pdf/cvproject.pdf)
+In the `src` folder there is the source code of the whole project:
+    - `src/mask_detection.py` is responsible for the detection of the surgical mask.
+    - `src/warpface.py` is reponsible of applying the TPS over the reference photo.
+    - `src/main.py` join the 2 scripts above, it is basically the classical part
+      of the pipeline.
+Everithing related to the deep neural network can be found inside `src/gan_inpainting/`:
+- `run.sh` and `test.sh` are the slurm scripts to start the training and the testing on the AImagelab Servers.
+- `layers.py` contains the pytorch implementation various layers used in the networks, so SelfAttention, GatedConv, ResNetSPD, ...
+- `loss.py` contains the implementation of different losses used in the
+  training.
+- `generator.py` and `discriminator.py` are the generator and discriminator classes. `generator.py` actually contains 2 different generator, in the end we used the MSSAGenerator which includes the Multi Scale Self Attention mechanism.
+- `dataset.py` contains two dataset classes: FakeDataset, only used during development for testing purposes, and FaceMaskDataset. The datasets used are an extension for FFHQ and CelebA and they can be found on AImagelab server at `/nas/softechict-nas-1/llumetti/FFHQ_MASK_GAN` and `/nas/softechict-nas-1/llumetti/CELEBA_MASK` respectively.
 
-## TODO
-- [x] Weights should be initialized with Xavier (or similar)
-- [x] Test the script to test the network (testing.py)
-- [x] Metrics analysis in training.py could be rewritten in a separated class
-- [x] Self attention layer generate CUDA out of memory
-- [x] Low number of channels in generator and discriminator always because of CUDA out of
-  memory
-- [x] Give the possibility to resume a training using the saved models as
-  checkpoint
-- [x] Give the option to transform images to 512x512 and 256x256
-- [x] Test FID metrics because we need a dataset of generated image
-- [x] It would be cool to test the network on the same image while training, in
-- [x] Add support for multiple gpu training with distributed data parallel
+## Run the detection + tps
+To execute the classical pipeline alone, run `main.py`:
+```bash
+python main.py
+```
+
+## Run the network
+To execute the net over a single image only, it is possible to use `inference.py`:
+```bash
+python inference.py \
+    --input_img face.jpg \
+    --input_mask mask.jpg \
+    --output output.jpg \
+    --checkpoint_dir /nas/softechict-nas-1/llumetti/checkpoints/gin
+```
+
+## Train and Testing
+To run the training and/or testing, is possible to use `run.sh` and `test.sh` (even without SLURM). For multinode you have to modify the arguments inside the scripts accordingly.
