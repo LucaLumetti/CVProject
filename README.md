@@ -36,7 +36,14 @@ Everithing related to the deep neural network can be found inside `src/gan_inpai
 ## Run the detection + tps
 To execute the classical pipeline alone, run `main.py`:
 ```bash
-python main.py
+python src/main.py \
+  --input_front face.jpg \
+```
+or, if you want provide also a lateral/reference image
+```bash
+python src/main.py \
+  --input_front face.jpg \
+  --input_lateral reference.jpg \
 ```
 
 ## Run the network
