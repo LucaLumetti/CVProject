@@ -49,20 +49,31 @@ Matteo Di Bartolomeo\\
 %%%%%%%%% ABSTRACT
 
 \begin{abstract}
-  Our project aims to remove the surgical mask over a person face by
+  Our project aims to remove the surgical mask over a person's face by
   reconstructing the covered region. To reach our goal, we used a deep network
   to detect landmarks over the face, a classical pipeline to segment the
   surgical mask and produce as output a binary mask. Both original image and
-  mask are then feeded through the network which will output the reconstructed
+  mask are then fed through the network which will output the reconstructed
   face. It is also possible to have a second photo of the same person without
-  the sugical mask that can be used as reference. From this photo, a small
+  the surgical mask that can be used as a reference. From this photo, a small
   region of the cheek and mouth is extracted and warped over the original image,
   the mask is then adjusted to match the new image. This reference photo should
-  provide to the network more information about the face thus lead to a more
-  loyal reconstruction.
+  provide to the network more information about the face thus leading to a more
+  loyal reconstruction. The source code of the whole project is available at
+  https://github.com/LucaLumetti/CVProject/
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
+\section{Related works}
+A lot of works on surgical mask segmentation have been made over the last year, since
+the start of the Covid-19 pandemic, but all of them were completely based only on
+end-to-end deep neural networks. About the task of image inpainting, a lot of
+research has been done. Most of the works were about natural images inpainting,
+\cite{yu2019free} \cite{li2020deepgin}, and facial
+inpainting \cite{iizuka2017globally} \cite{li2017generative}
+\cite{li2020learning}. The mask can be restricted to a fixed form (usually a
+square) or be a free-form without any particular constraint.\\
+
 \section{Mask Segmentation}
 We made use of MediaPipe's FaceMesh \cite{DBLP:journals/corr/abs-1907-06724}
 library to find facial landmarks over the face covered with the surgical mask
@@ -70,7 +81,7 @@ and the reference photo. Facial landmarks are important to have an initial
 approximation of the region where to search the surgical mask and to warp the
 reference photo over the first one. To perform the segmentation of the mask we
 apply a k-means with k=3 over the polygon we created using specific face
-landmarks and pick the bigger region between the 3.  The k has been choosen to
+landmarks and pick the bigger region between the 3.  The k has been chosen to
 be 3 as in the polygonal region we expect to find the mask, the background and
 the skin of the person's face. In the end, a binary image is created, with a 1
 where the mask is present and 0 elsewhere, while in the original image, the mask
@@ -84,14 +95,14 @@ area is filled with 0s.
 
 \section{Warping the reference photo}
 The objective of the reference photo is to guide the network to a more loyal
-reconstruction, by giving some informations on how the mouth and close parts
+reconstruction, by giving some information on how the mouth and close parts
 should look. As we allow the reference to have a yawn different than frontal, we
 apply a thin-plate spline transformation to adjust it. We use 30 specific
 landmarks as parameters as using more of them lead to distortions given by the
 errors in the landmarks detection while less lead to an imperfect warping. The
-same polygon region of Mask Segmentation is cut from the reference photo, the by
-applying the TPS it is sticked to to main photo leading to a (partial)
-reconstruction. The image will then be feeded to the network which will
+same polygon region of Mask Segmentation is cut from the reference photo, then by
+applying the TPS it is stuck to main photo leading to a (partial)
+reconstruction. The image will then be fed to the network which will
 reconstruct the missing parts.
 \begin{figure}
   \caption{Reference photo with landmarks found by mediapipe on the left,
@@ -104,12 +115,12 @@ reconstruct the missing parts.
 Image inpainting (a.k.a. image completion) is the task to fill a missing region
 in an image by predicting the value of the missing pixels in order to have a
 realistic image which is semantically close to the original one and visually
-correct. There are two different approches to achieve this task:
+correct. There are two different approaches to achieve this task:
 \begin{enumerate}
   \item Low-level feature patch-matching which does not work pretty well with
     non-stationary use-cases (e.g. faces, objects or complicate scenes);
   \item	Feed-forward models with deep convolutional networks which overcome the
-    problem of prevoious case exploiting semantics learned on large scale
+    problem of previous case exploiting semantics learned on large scale
     dataset.
 \end{enumerate}
 \section{Our approach}
@@ -125,13 +136,11 @@ Adversarial Network (GAN) characterized by:
 \end{itemize}
 The input of the network is a pre-processed RGB image so that its values are in
 range \([-1,+1]\) and its binary mask. For initializing the starting values of
-the network weigths, we opted for Kaiming initialization method. We provided
+the network weights, we opted for Kaiming initialization method. We provided
 different methods to initialize the starting values of the network weights, such
-as normal, Xavier, orthogonal and, the default one, Kaiming.\\
-
-We went for Adam as the generator and discriminator optimizer using a \(0.5\)
-momentum and different learning rates, respectively \(0.0001\) and \(0.0004\)
-for the first 10 epochs.
+as normal, Xavier, orthogonal and, the default one, Kaiming. We used Adam as the
+generator and discriminator optimizer using a \(0.5\) momentum and different
+learning rates, respectively \(0.0001\) and \(0.0004\) for 10 epochs.
 
 \subsection{Losses}
 Our final loss function is given by the sum of six different losses:
@@ -162,20 +171,16 @@ replaced with $\mathbf{I}_{out}$. \\
 \end{dmath}
 where \(\mathbb{P}_i\) is the data distribution of $\mathbf{I}_{in}$, \textit{D}
 and \textit{G} are, respectively, the discriminator and the generator and ReLU
-is the rectified linear unit defined as \(f(x) = \mathrm{max}(0,x)\).\\ It is
-the GAN Hinge loss for generative adversarial learning where discriminator is
-trained to distinguish $\mathbf{I}_{com}$ from $\mathbf{I}_{gt}$ and generator
+is the rectified linear unit defined as \(f(x) = \mathrm{max}(0,x)\).\\ This is
+also know as GAN Hinge loss for generative adversarial learning, where
+discriminator is trained to distinguish $\mathbf{I}_{com}$ from $\mathbf{I}_{gt}$ and generator
 has the aim of cheating the classification of the discriminator.
 
 \subsubsection{Reconstruction Loss.}
 \begin{dmath}
-    \mathcal{L}_{recon} = \lambda_{hole} \mathcal{L}_{hole} +
-    \mathcal{L}_{valid}
+  \mathcal{L}_{recon} = |\mathbf{I}_{gt} - \mathbf{I}_{coarse}| + |\mathbf{I}_{gt} - \mathbf{I}_{com}|
 \end{dmath}
-where \(\mathcal{L}_{hole}\) is the sums of the distances calculated only from
-the missing pixels, \(\mathcal{L}_{valid}\) is like \(\mathcal{L}_{hole}\) but
-for valid pixels. \(\lambda_{hole}\) is a weight to the pixel-wise loss withing
-the missing regions.
+Is the standard L1 loss applied on both coarse and refined images.
 
 \subsubsection{Total variation (TV) Loss.}
 \begin{dmath}
@@ -188,7 +193,7 @@ where \textit{H} and \textit{W} are the height and width of $\mathbf{I}_{com}$
 and $N^{row}_{\mathbf{I}_{com}}$ and $N^{col}_{\mathbf{I}_{com}}$ are the number
 of pixels in $\mathbf{I}_{com}$ without the last row and the last column.
 \\
-It is responsible of the regularization of the image to improve the smoothness
+It is responsible for the regularization of the image to improve the smoothness
 of the output image.
 
 \subsubsection{Perceptual Loss.}
@@ -200,13 +205,12 @@ of the output image.
     }_1}{N_{\phi^{\mathbf{I}_{gt}}_l}}
 \end{dmath}
 where \(\phi\) is the well-trained loss network, VGG-19\cite{simonyan2014very},
-and \(\phi^{\mathbf{I}}_l\) the actiovation maps of the \(l^{th}\) layer of
+and \(\phi^{\mathbf{I}}_l\) the activation maps of the \(l^{th}\) layer of
 \(\phi\) given an image \(\mathbf{I}\).
 \(N_{\phi^{\mathbf{I}_{gt}}_l}\) denotes the number of elements in
 \(\phi^{\mathbf{I}_{gt}}_l\) and \textit{L} is the number of layers used.
 This loss represents the L1-norm distance between high-level feature
-representations in 5 different convolutive layers. Its weight is set to
-\(0.05\).
+representations in 5 different convolutive layers.
 
 \subsubsection{Style Loss.}
 \begin{dmath}
@@ -224,7 +228,7 @@ the features correlations between each activation map of the \(l^{th}\) layer of
 Using the same 5 levels of the previous loss, it is the sum of the distances of
 the auto-correlation matrixes between the output and the ground truth multiplied
 by a factor that depends on the size and number of the activation maps in those
-layers. Its weigth is set to \(40\).
+layers.
 
 \subsubsection{Contrastive loss.}
 \begin{dmath}\label{eq:contra}
@@ -232,20 +236,19 @@ layers. Its weigth is set to \(40\).
     z_{i}^{'}/\tau)}{\sum_{j=0}^{K}exp(z_{i}z_{j}^{'}/\tau)}}
 \end{dmath}
 The equation \eqref{eq:contra} is the categorical cross-entropy of classifying
-the positive sample correctly \cite{oord2018representation}. \((z_{i},
-z_{i}^{'})\) are the encoding version of the images \((x_{q}, x_{k})\), where
-\(x_{q}\)is the original image and \(x_{k}\) is the trasformated image. \(\tau\)
-is an hyper-parameter that control the sensitivity of the product and it's
+the positive sample correctly \cite{oord2018representation}. $z_i$ is the
+encoded version of the image, \(\tau\) is a hyper-parameter that controls the
+sensitivity of the product and it's
 called temperature. The dot product between the encoding vector of the original
-image and the traformated image measure the similarity between rappresentations.
+image and the transformated image measure the similarity between representations.
 In our network the positive images are created by the original images with some
-transformations and we don't use negative examples. This loss is helpful to get
+transformations. This loss is helpful to get
 more information during the training because the network learns from the
-similarity between images. This methods try to maximise similarity between
-representations of positive similar pairs and minimises the similarity with the
+similarity between images. This methods try to maximize the similarity between
+representations of positive similar pairs and minimize the similarity with the
 feature extracted from negative images\cite{le2020contrastive}.
 To calculate this loss we use the feature vector with the biggest number of
-channels in our network (512). We squeeze this vector in a way that preserve the
+channels in our network (512). We squeeze this vector in a way that preserves the
 information of the original image with average pooling so we use a vector with
 dimension 1x1x512. The transformations used are inspired by
 StyleGAN\cite{karras2020analyzing} and they are:
@@ -256,26 +259,21 @@ StyleGAN\cite{karras2020analyzing} and they are:
   \item change in saturation with probability 0.75
   \item hue rotation with probability 1.0
 \end{itemize}
-% DA RISCRIVERE MEGLIO?
-These transformations are been proven to be effective in our case as the network
-was overfitting the skin color and the mouth position; some image in the FFHQ
-dataset are from people with painted face (blue and red), when the network was
-feeded with these images, the inpainted region wasn't of the same color of the
-face. After implementing augmentation and contrastive loss, these problems
-disappeared.
+This loss and these transformations are been proven to be really effective in
+our case as the network was overfitting the skin color, the mouth type and its
+position.
 
 \subsection{Datasets}
-GAN networks are data-hungry and needs a lot of diverse training examples in
+GAN networks are data-hungry and need a lot of diverse training examples in
 order to generate quality images, for this reason we used the FFHQ 1024x1024
 images \cite{karras2019style}, rescaled to 256x256.  In other GAN inpainting
 architectures, the mask region to reconstruct is usually calculated during the
 training in a randomized way.  As we do not need this randomization process, for
-each image of FFHQ we precalculated the face region where the mask is weared
-using facial landmarks. To test our network, instead, we use CelebA256 dataset
-in order to compare our results with DeepGIN.
+each image of FFHQ we precalculated the face region where the mask is worn
+using facial landmarks. To test our network, instead, we use CelebA256 dataset.
 
 \subsection{Architecture}
-Our architecture is highly inspired by Free Form Image Inpainting with Gated
+Our architecture is inspired by Free Form Image Inpainting with Gated
 Convolution \cite{yu2019free} and DeepGIN \cite{li2020deepgin}.
 A mixed-precision training is used to train the network, to be more precise,
 \textbf{O2} option of nvidia-apex
@@ -294,72 +292,21 @@ Our generator net is composed of two stages: Coarse Network and Refine Network.
   \label{fig:discriminator}
 \end{figure}
 \subsubsection{Coarse Network}
-In this stage we decided to use the gated convolution so that the generator is
+In this stage we decided to use the gated convolution \cite{yu2019free} so that the generator is
 able to learn a dynamic feature selection mechanism for each channel and for
 each spatial location. The feature selection mechanism takes into account not
 only the background and the mask given in input, but also the semantic
 segmentation in some channels.
-Furthermore using gated convolutive layers we can avoid the inner drawbacks of
-vanilla and partial convolution. In fact taking a look to the vanilla
-convolution formula:
-\begin{dmath}
-    O_{y,x} = \sum_{i=-k'_h}^{k'_h}\sum_{j=-k'_w}^{k'_w} W_{k'_h + i, k'_w + j} \cdot I_{y + i, x + j}
-\end{dmath}
-where \(O_{y,x}\) is the output, \(x,y\) represent x-axis and y-axis of the
-output map, \(k_h\) and \(k_w\) is the kernel size, \(k'_h = \frac{k_h -
-1}{2}\),\(k'_w = \frac{k_w - 1}{2}\), \(W \in \mathbb{R}^{k_h \times k_w \times
-C' \times C}\) represents the convolutional filters and \(I_{y + i, x + j}\) is
-the input image, we can notice that it considers all pixels valid and it is
-applied to the entire input image. This cause color discrepancy and blurriness
-in final output image.
-\\
-In partial convolution, thanks to a masking and re-normalization step, the
-operation depends only on valid pixels:
-\begin{dmath}
-    O_{y,x} = \begin{cases}
-    \sum \sum W \cdot (I \odot \frac{M}{sum(M)}), & \text{if sum(M) \(>\) 0} \\
-      0 & \text{otherwise}
-    \end{cases}
-\end{dmath}
-
-\(M\) is the binary mask where a pixel with a value of 1 is considered valid and
-invalid with a value of 0 and \(\odot\) is the element-wise multiplication.
-There is a mask-update step based on the rule: \(m'_{y,x} = 1, \iff sum(M) > 0\)
-\\
-This operation, however, has some problems:
-\begin{itemize}
-    \item It will set to one a pixel in next layer no matter the number of
-      1-value-pixels covered by the filter range in the previous layer;
-    \item Invalid pixels will progressively fade out from the mask going deeper
-      in the network layers;
-    \item All channel in each layer shares the same mask limiting the flexibity
-      of the model.
-\end{itemize}
-Gated convolution, instead, is based on the following formula:
-\begin{gather}
-    Gating_{y,x} = \sum \sum W_g \cdot I \\
-    Feature_{y,x} = \sum \sum W_f \cdot I \\
-    O_{y,x} = \phi (Feature_{y,x}) \odot \sigma (Gating_{y,x})
-\end{gather}
-where there is sigmoid function \(\sigma\) to have the output in the range
-\([0,1]\), while \(\phi\) represents an activation function such ReLU, ELU and
-LeakyReLU (we used the latter). \(W_g\) and \(W_f\) are two different
-convolutional layers.
-\\
-As said before the benefits of using this operation is that the network is able
-to learn a mechanism to select feature dynamically for each channel and each
-spatial location considering also the semantic segmentation in some channels.
 \\
 As shown in figure \ref{fig:generator} the coarse net is
-charaterized by an initial downsampling phase, followed by a residual one
-and at the end there is and upsampling phase using the dilated gated convolution
+characterized by an initial downsampling phase, followed by a residual one
+and at the end there is an upsampling phase using the dilated gated convolution
 that could be seen as a gated convolution operation preceded by a resize
-operation. The output of the coarse net will pass through an activation function
-(we chose a \(\tanh\)) and the result will be given as input to the refinement
-network.
+operation. The output of the coarse net will be multiplied with the mask and
+added to the original image, then fed in the refine net.
 \subsubsection{Refine Network}
-The refine network take the output of the coarse net and the mask as input.
-In this stage there are 6 custom ResNet blocks with four different dilation rate and some
+The refine network takes the output of the coarse net and the mask as input.
+In this stage there are 6 custom ResNet blocks with four different dilation rates and some
 gated convolutional layers.
 This modified ResNet blocks are called Spatial Pyramid Dilation (SPD) (Figure
 \ref{fig:rnspd}). This layer is composed of different convolutional blocks with
@@ -373,17 +320,17 @@ receptive field.
   \label{fig:rnspd}
 \end{figure}
 Another useful feature that is implemented in this net is the Multi Scale Self
-Attention (MSSA). The MSSA using the self-similarity between different layers
-and it's helpful to have a better coherence in the final image. We control
-the self-similarity with three different scale: 16x16, 32x32, 64x64.
-The central layer are composed of self attention block. We use standard
+Attention (MSSA). The MSSA uses the self-similarity between different layers
+and it's helpful to have better coherence in the final image. We control
+the self-similarity with three different scales: 16x16, 32x32, 64x64.
+The central layers are composed of self attention block. We use a standard
 convolutional layer to reduce the size before the self attention. In this manner
 we avoid an excessive increase of the parameters. With self attention we can
-find a better correlation between feature and we have a better reconstruction.
+find a better correlation between features and have a better reconstruction.
 \subsubsection{Discriminator}
-Our discriminator is composed by 6 convolutional blocks with kernel size 5 and
+Our discriminator is composed of 6 convolutional blocks with kernel size 5 and
 stride 2.
-These convolutional methods allow to captures the Markovian patches that
+These convolutional methods allow to capture the Markovian patches that
 represents better contextual feature\cite{li2016precomputed}.
 We add a spectral normalization to improve the training
 stabilization\cite{miyato2018spectral}.
@@ -399,14 +346,14 @@ that create the image z.
 
 \subsection{Multi-GPU and Multi-Node Training}
 % Da rivedere
-As GAN networks are heavy to train, we decided to design the whole network to be
+As GAN networks are heavy to train, so we decided to design the whole network to be
 trainable on multi GPU and multi node architectures. Training it on a single K80
-was infeasible as a batch size greater that 2 gives CUDA out of memory error.
+was infeasible as a batch size greater than 2 gives CUDA out of memory error.
 We end up using 4 GPU K80 in parallel that let us to complete a full epoch in
 under 24h (which is the time limit on AImageLab's servers). We also give support
-for multi node because even if we were on the same node, we initially could use
+for multi node because even if we were on the same node. We initially could use
 at most 2 GPUs per account, so every account could be seen as a different node
-thus we could break the GPUs limit. Anyway as our max GPU per users were
+thus we could break the GPUs limit. Anyway as our max GPU per user was
 upgraded to 4, we didn't use that technique.
 
 \subsection{Results}
@@ -414,26 +361,30 @@ To evaluate the results (Table \ref{tab:results}) we use different metrics:
 PSNR, SSIM, LPIPS and FID. We conducted the test with CelebA 256 Dataset and
 compared the results with different inpainting network. It must be noted that
 our network is the only one who is restricted to inpaint a specific part of an
-image of a human face, others generalize
-There are no network out there which perform our same specific tasks.
+image of a human face, while others generalize to the whole image.
 \begin{table}
   \begin{tabular}{|c|c|c|c|c|c|}
     \hline
     Method & PSNR & SSIM & FID & LPIPS \\
     \hline
-    DeepFillv2 (FFHQ) & 29.70 & 0.72 & 75.56 & 0.29 \\
-    DIP (CelebA)      & 25.46 & 0.85 & n.d. & n.d. \\
-    Ours (CelebA)     & 58.95 & 0.88 & 151.95 & 0.23\\
+    lizuka et al. \cite{iizuka2017globally} & 18.62 & 0.69 & n.d. & 0.51 \\
+    SymmFCNet \cite{li2020learning}         & 27.81 & 0.97 & n.d. & 0.61 \\
+    DeepFillv2 \cite{yu2019free}            & 29.70 & 0.72 & 75.56 & 0.29 \\
+    DIP \cite{Ulyanov_2018_CVPR}            & 25.46 & 0.85 & n.d. & n.d. \\
+    Ours                                    & 58.95 & 0.88 & 151.95 & 0.23\\
   \hline
   \end{tabular}
   \\
-  \caption{Comparison with different network on the same metrics}
+  \caption{Comparison with different network \textbf{on different datasets} on the same metrics}
   \label{tab:results}
 \end{table}
 
+It must be noted that these results were got by using different datasets, we
+just wanted to have a rough estimation of our distance from the state-of-the-art
+networks.
 Results are not that bad, FID is pretty high and we think that this is due to
-some artifacts that often appears in the generated regions.
-In the Table \ref{tab:photos} we show some of the generated images.
+some artifacts that often appear in the generated regions.
+In the Table \ref{tab:photos} we show some of the reconstructed images.
 \begin{table}
   \begin{tabular}{cccc}
     \includegraphics[width=.2\linewidth]{samples/00045.jpg}&
@@ -455,14 +406,13 @@ In the Table \ref{tab:photos} we show some of the generated images.
 \end{table}
 
 \subsection{Conclusion}
-Our results are not too far to the state-of-the-art and we think that they can be
-improved by training the network for more time and more data. Some of the
-networks we have compared had \~10x more epochs and used a lot more training data (CelebA + FFHQ + StyleGAN).
-We couldn't afford that as the time and computing resource were not feasible for
-us.\\ This network is also differ from the other because it has a specific inpainting
-tasks, while the other networks have to generalize to a larger domain.
-
-%% ALTRO?
+Our results are not too far to the state-of-the-art and we think that they can
+be improved by training the network for more time, with more data and a larger
+variety of masks. Some of the networks we have compared had \~10x more epochs
+and used a lot more training data (CelebA + FFHQ + StyleGAN). We couldn't afford
+that as the time and computing resource were not feasible for us.\\ This network
+is also different from the other because it has a specific inpainting task, while
+the other networks have to generalize to a larger domain.
 
 {\small
 \bibliographystyle{plain}
