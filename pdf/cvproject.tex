@@ -112,7 +112,7 @@ reconstruct the missing parts.
 \end{figure}
 
 \section{Image inpainting}
-Image inpainting (a.k.a. image completion) is the task to fill a missing region
+Image inpainting is the task to fill a missing region
 in an image by predicting the value of the missing pixels in order to have a
 realistic image which is semantically close to the original one and visually
 correct. There are two different approaches to achieve this task:
@@ -185,9 +185,9 @@ Is the standard L1 loss applied on both coarse and refined images.
 \subsubsection{Total variation (TV) Loss.}
 \begin{dmath}
     \mathcal{L}_{tv} = \sum^{H-1,W}_{x,y} \frac{\norm{ \mathbf{I}^{x+1,y}_{com}
-    - \mathbf{I}^{x,y}_{com} }_1}{N^{row}_{\mathbf{I}_{com}}} +
+    - \mathbf{I}^{x,y}_{com} }^2}{N^{row}_{\mathbf{I}_{com}}} +
     \sum^{H,W-1}_{x,y} \frac{\norm{ \mathbf{I}^{x,y+1}_{com} -
-    \mathbf{I}^{x,y}_{com} }_1}{N^{col}_{\mathbf{I}_{com}}}
+    \mathbf{I}^{x,y}_{com} }^2}{N^{col}_{\mathbf{I}_{com}}}
 \end{dmath}
 where \textit{H} and \textit{W} are the height and width of $\mathbf{I}_{com}$
 and $N^{row}_{\mathbf{I}_{com}}$ and $N^{col}_{\mathbf{I}_{com}}$ are the number
@@ -199,8 +199,6 @@ of the output image.
 \subsubsection{Perceptual Loss.}
 \begin{dmath}
     \mathcal{L}_{perceptual} = \sum^L_{l=1} \frac{\norm{
-      \phi^{\mathbf{I}_{out}}_l - \phi^{\mathbf{I}_{gt}}_l
-    }_1}{N_{\phi^{\mathbf{I}_{gt}}_l}} + \sum^L_{l=1} \frac{\norm{
       \phi^{\mathbf{I}_{com}}_l - \phi^{\mathbf{I}_{gt}}_l
     }_1}{N_{\phi^{\mathbf{I}_{gt}}_l}}
 \end{dmath}
@@ -214,9 +212,8 @@ representations in 5 different convolutive layers.
 
 \subsubsection{Style Loss.}
 \begin{dmath}
-        \mathcal{L}_{style} = \sum^{\mathbf{I}_{out},\mathbf{I}_{com}}_{l=1}
-        \sum^L_{l=1} \frac{1}{C_l C_l} \norm{ \frac{1}{C_l H_l W_l}
-        ((\phi^{\mathbf{I}}_l)^\top(\phi^{\mathbf{I}}_l) -
+        \mathcal{L}_{style} = \sum^L_{l=1}\norm{ \frac{1}{C_l H_l W_l}
+        ((\phi^{\mathbf{I}_{com}}_l)^\top(\phi^{\mathbf{I}_{com}}_l) -
         (\phi^{\mathbf{I}_{gt}}_l)^\top(\phi^{\mathbf{I}_{gt}}_l)  )}
 \end{dmath}
 where \(C_l\) refers to the number of activation maps of the \(l^{th}\) layer of
@@ -242,9 +239,7 @@ sensitivity of the product and it's
 called temperature. The dot product between the encoding vector of the original
 image and the transformated image measure the similarity between representations.
 In our network the positive images are created by the original images with some
-transformations. This loss is helpful to get
-more information during the training because the network learns from the
-similarity between images. This methods try to maximize the similarity between
+transformations. This methods try to maximize the similarity between
 representations of positive similar pairs and minimize the similarity with the
 feature extracted from negative images\cite{le2020contrastive}.
 To calculate this loss we use the feature vector with the biggest number of
@@ -410,9 +405,10 @@ Our results are not too far to the state-of-the-art and we think that they can
 be improved by training the network for more time, with more data and a larger
 variety of masks. Some of the networks we have compared had \~10x more epochs
 and used a lot more training data (CelebA + FFHQ + StyleGAN). We couldn't afford
-that as the time and computing resource were not feasible for us.\\ This network
-is also different from the other because it has a specific inpainting task, while
-the other networks have to generalize to a larger domain.
+that as the time and computing resource were not feasible for us.\\
+What make this network different from previous works is the specific task
+(inpainting the surgical mask region) and the use of a contrastive loss to
+prevent overfitting.
 
 {\small
 \bibliographystyle{plain}
