@@ -9,7 +9,6 @@ from generator import *
 from discriminator import Discriminator
 from loss import *
 from metrics import TestMetrics
-from apex import amp
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

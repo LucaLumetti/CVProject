@@ -5,14 +5,18 @@ The people involved in the project are:
 - Federico Silvestri (243938@studenti.unimore.it)
 
 ## Installation
-TODO
+Python 3 is required, the main python packages required are: pytorch, torchvision, opencv, mediapipe,
+pytorch\_fid, lpips and nvidia-apex. Everything can be installed via pip (`pip
+install -r requirements.txt`) but an exception is made for nvidia-apex, which
+can be installed via anaconda (`conda install -c conda-forge nvidia-apex`) or by
+following the [guide here](https://github.com/NVIDIA/apex#quick-start)
 
 ## Run
 To run the whole pipeline over a single image or a pair image+reference, execute:
 ```shellscript
-run.sh image.jpg [reference.jpg]
+sh run.sh input.jpg [reference.jpg]
 ```
-The output will be `output.jpg`
+The outputs will be inside the `output` directory
 
 ## Project structure
 There are 2 main folders, `pdf` and `src`. The first one contain the whole LaTeX code, images, etc... that were used to produce the [final report](https://github.com/LucaLumetti/CVProject/blob/main/pdf/cvproject.pdf)

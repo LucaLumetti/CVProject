@@ -1,9 +1,11 @@
 #!/usr/bin/python3
+import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import mediapipe as mp
 
+curr_dir = os.path.dirname(os.path.realpath(__file__))
 fixed_landmarks = [234, 454, 447, 345, 346, 347, 348, 349, 277, 437, 399, 419,
         197, 196, 174, 47, 120, 119, 118, 117, 116, 34, 127]
 
@@ -34,7 +36,7 @@ def resize_with_ratio(img, width=None, height=None, inter=cv2.INTER_AREA):
 # keypoint detection
 def find_facial_landmarks(img, landmarks=[], debug=False):
 
-    with open('landmarks_list.txt', 'r') as f:
+    with open(f'{curr_dir}/landmarks_list.txt', 'r') as f:
         landmarks_list = [int(i) for i in f.readline().strip().split(',')]
 
     keypoints = []
@@ -141,7 +143,7 @@ def find_mask(img, debug=False, save_mask=None):
     eroded = cv2.erode(closing, kernel, iterations=5)
 
     # dilation
-    dilated = cv2.dilate(eroded, kernel, iterations=10)
+    dilated = cv2.dilate(eroded, kernel, iterations=8)
 
     if debug:
         cv2.imshow('polygon', mask)
