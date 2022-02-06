@@ -357,6 +357,7 @@ PSNR, SSIM, LPIPS and FID. We conducted the test with CelebA 256 Dataset and
 compared the results with different inpainting network. It must be noted that
 our network is the only one who is restricted to inpaint a specific part of an
 image of a human face, while others generalize to the whole image.
+\\
 \begin{table}
   \begin{tabular}{|c|c|c|c|c|c|}
     \hline
@@ -398,6 +399,21 @@ In the Table \ref{tab:photos} we show some of the reconstructed images.
   \label{tab:photos}
   \caption{Some of the generated images, the latter two were augmented before
   feeding them to the network.}
+\end{table}
+
+Unluckily the results with the reference photos are not very good, at least not
+good as we expected, this is probably due to the fact that the network have never
+performed such task. In the Figure \ref{fig:recon_ref_taylor} we show the output
+of the network when Figure 1 is feeded in the network. Maybe a better way to
+give the reference photo to the network would be by using an additional channel,
+instead of putting it inside the input image.
+
+\begin{table}
+  \begin{tabular}{c}
+    \includegraphics[width=0.5\linewidth]{img/out_half_taylor.jpg}
+  \end{tabular}
+    \caption{Final result}
+    \label{fig:recon_ref_taylor}
 \end{table}
 
 \subsection{Conclusion}
